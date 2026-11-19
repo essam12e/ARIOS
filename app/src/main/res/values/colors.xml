@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="arios_bg">#FF0B0B0D</color>
+    <color name="arios_black">#FF050506</color>
+    <color name="arios_silver">#FFD9DDE3</color>
+    <color name="arios_surface">#FF141417</color>
+    <color name="ic_launcher_background">#FF000000</color>
+</resources>

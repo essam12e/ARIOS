@@ -1,0 +1,5 @@
+-keep class com.arios.player.widget.** { *; }
+-keep class com.arios.player.playback.PlaybackService { *; }
+-dontwarn org.conscrypt.**
+-dontwarn org.bouncycastle.**
+-dontwarn org.openjsse.**

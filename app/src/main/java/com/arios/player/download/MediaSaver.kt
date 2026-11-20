@@ -14,7 +14,7 @@ import kotlin.coroutines.resume
 
 /** Writes audio files into the public "Music/ARIOS" folder so they appear in every player. */
 object MediaSaver {
-    const val FOLDER = "ARIOS"
+    const val FOLDER = "Flowfy"
 
     fun safeName(s: String) = s.replace(Regex("""[\\/:*?"<>|\n\r\t]"""), "_").trim().take(120).ifEmpty { "track" }
 

@@ -32,9 +32,9 @@ object ShareUtil {
         val isVideo = mime.startsWith("video")
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
             val values = ContentValues().apply {
-                put(MediaStore.MediaColumns.DISPLAY_NAME, "ARIOS_${System.currentTimeMillis()}.${file.extension}")
+                put(MediaStore.MediaColumns.DISPLAY_NAME, "Flowfy_${System.currentTimeMillis()}.${file.extension}")
                 put(MediaStore.MediaColumns.MIME_TYPE, mime)
-                put(MediaStore.MediaColumns.RELATIVE_PATH, (if (isVideo) Environment.DIRECTORY_MOVIES else Environment.DIRECTORY_PICTURES) + "/ARIOS")
+                put(MediaStore.MediaColumns.RELATIVE_PATH, (if (isVideo) Environment.DIRECTORY_MOVIES else Environment.DIRECTORY_PICTURES) + "/Flowfy")
             }
             val col = if (isVideo) MediaStore.Video.Media.getContentUri(MediaStore.VOLUME_EXTERNAL_PRIMARY)
             else MediaStore.Images.Media.getContentUri(MediaStore.VOLUME_EXTERNAL_PRIMARY)
@@ -42,8 +42,8 @@ object ShareUtil {
             context.contentResolver.openOutputStream(uri)?.use { o -> file.inputStream().use { it.copyTo(o) } }
         } else {
             @Suppress("DEPRECATION")
-            val d = File(Environment.getExternalStoragePublicDirectory(if (isVideo) Environment.DIRECTORY_MOVIES else Environment.DIRECTORY_PICTURES), "ARIOS").apply { mkdirs() }
-            file.copyTo(File(d, "ARIOS_${System.currentTimeMillis()}.${file.extension}"))
+            val d = File(Environment.getExternalStoragePublicDirectory(if (isVideo) Environment.DIRECTORY_MOVIES else Environment.DIRECTORY_PICTURES), "Flowfy").apply { mkdirs() }
+            file.copyTo(File(d, "Flowfy_${System.currentTimeMillis()}.${file.extension}"))
         }
         true
     }.getOrDefault(false)

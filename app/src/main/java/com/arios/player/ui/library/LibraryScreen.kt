@@ -354,7 +354,7 @@ private fun PlaylistsTab(nav: AppNav, lib: LibraryState, bottomPadding: Dp) {
     val playlists by Arios.userStore.playlists.collectAsState()
     var create by remember { mutableStateOf(false) }
     val ctx = androidx.compose.ui.platform.LocalContext.current
-    val downloadedCount = lib.songs.count { it.folder.endsWith("/ARIOS") || it.path.contains("/Music/ARIOS/") }
+    val downloadedCount = lib.songs.count { it.folder.endsWith("/ARIOS") || it.folder.endsWith("/Flowfy") || it.path.contains("/Music/ARIOS/") || it.path.contains("/Music/Flowfy/") }
     LazyColumn(Modifier.fillMaxSize(), contentPadding = PaddingValues(bottom = bottomPadding + 16.dp)) {
         item {
             Text(stringResource(R.string.smart_playlists), Modifier.padding(start = 20.dp, top = 8.dp), style = MaterialTheme.typography.titleSmall, color = AriosColors.Mint)
@@ -384,7 +384,7 @@ private fun PlaylistsTab(nav: AppNav, lib: LibraryState, bottomPadding: Dp) {
         }
         if (downloadedCount > 0) item {
             ListRow(null, stringResource(R.string.downloaded_songs), ctx.getString(R.string.songs_count, downloadedCount), RoundedCornerShape(14.dp), Icons.Filled.DownloadDone) {
-                val f = lib.folders.firstOrNull { it.path.endsWith("/ARIOS") }
+                val f = lib.folders.firstOrNull { it.path.endsWith("/Flowfy") } ?: lib.folders.firstOrNull { it.path.endsWith("/ARIOS") }
                 if (f != null) nav.push(Screen.FolderDetail(f.path))
             }
         }

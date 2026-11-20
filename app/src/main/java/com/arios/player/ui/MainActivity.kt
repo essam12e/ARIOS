@@ -56,7 +56,7 @@ class MainActivity : AppCompatActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         com.arios.player.ui.theme.AriosColors.apply(
-            com.arios.player.ui.theme.ACCENTS.getOrElse(Arios.prefs.accent) { com.arios.player.ui.theme.ACCENTS[0] }, Arios.prefs.amoled,
+            (com.arios.player.ui.theme.ACCENTS.firstOrNull { it.id == Arios.prefs.accent } ?: com.arios.player.ui.theme.ACCENTS[0]), Arios.prefs.amoled,
         )
         enableEdgeToEdge()
         super.onCreate(savedInstanceState)

@@ -78,7 +78,7 @@ class Prefs(context: Context) {
 
     // ---- look
     var accent: Int
-        get() = sp.getInt("accent", 0)
+        get() = sp.getInt("accent", 6)
         set(v) { sp.edit().putInt("accent", v).apply(); bump() }
     var amoled: Boolean
         get() = sp.getBoolean("amoled", false)

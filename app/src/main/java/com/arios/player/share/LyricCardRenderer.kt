@@ -168,7 +168,7 @@ class LyricCardRenderer(context: Context) {
         logo?.let { c.drawBitmap(it, null, RectF(card.left + pad, footY - 6 * s, card.left + pad + lsz * it.width / it.height, footY - 6 * s + lsz), p) }
         tp.textSize = 34 * s; tp.color = withAlpha(Color.WHITE, 200)
         tp.shader = LinearGradient(0f, 0f, 400 * s, 0f, spec.accentLight, spec.accent, Shader.TileMode.CLAMP)
-        val brand = "ARIOS · آريوس"
+        val brand = "Flowfy · فلوفاي"
         c.drawText(brand, card.right - pad - tp.measureText(brand), footY + 44 * s, tp)
         tp.shader = null
 

@@ -1,4 +1,4 @@
-# ARIOS · آريوس
+# Flowfy · فلوفاي
 
 Offline Android music player with live, word-by-word synced lyrics. Dark, silver identity. No account, no subscription, no ads.
 

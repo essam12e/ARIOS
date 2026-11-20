@@ -32,7 +32,7 @@ object Arios {
                 val req = chain.request()
                 val b = req.newBuilder()
                 if (req.header("User-Agent") == null) {
-                    b.header("User-Agent", "ARIOS/${BuildConfigInfo.VERSION} (https://github.com/essam12e/ARIOS)")
+                    b.header("User-Agent", "Flowfy/${BuildConfigInfo.VERSION} (https://github.com/essam12e/ARIOS)")
                 }
                 chain.proceed(b.build())
             }
@@ -66,7 +66,7 @@ object Arios {
     }
 }
 
-object BuildConfigInfo { const val VERSION = "1.3.0" }
+object BuildConfigInfo { const val VERSION = "1.4.0" }
 
 class AriosApp : Application(), ImageLoaderFactory {
     override fun onCreate() {

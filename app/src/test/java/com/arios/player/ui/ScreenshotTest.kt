@@ -205,7 +205,7 @@ class ScreenshotTest {
         playing(songs[0], 60_000)
         Arios.prefs.libraryTab = 2
         shoot("12_royal", AppNav())
-        Arios.prefs.accent = 0
+        Arios.prefs.accent = 6
     }
 
     @Test fun lyricCards() {

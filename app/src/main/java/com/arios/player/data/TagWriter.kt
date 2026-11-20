@@ -109,7 +109,7 @@ object TagWriter {
         val audioStart = p
         // existing comments
         val vendorAndComments = blocks.firstOrNull { it.type == 4 }?.data
-        var vendor = "ARIOS"
+        var vendor = "Flowfy"
         val comments = ArrayList<Pair<String, String>>()
         if (vendorAndComments != null) runCatching {
             val bb = ByteBuffer.wrap(vendorAndComments).order(ByteOrder.LITTLE_ENDIAN)

@@ -13,7 +13,7 @@ object BackupManager {
     suspend fun export(context: Context, uri: Uri): Boolean = withContext(Dispatchers.IO) {
         runCatching {
             val root = JSONObject()
-            root.put("app", "ARIOS"); root.put("version", 1); root.put("created", System.currentTimeMillis())
+            root.put("app", "Flowfy"); root.put("version", 1); root.put("created", System.currentTimeMillis())
             root.put("user", Arios.userStore.toJson())
             root.put("settings", JSONObject(Arios.prefs.exportMap()))
             root.put("history", Arios.history.toJson())
@@ -32,7 +32,7 @@ object BackupManager {
         runCatching {
             val text = context.contentResolver.openInputStream(uri)?.use { it.readBytes().toString(Charsets.UTF_8) } ?: error("no stream")
             val root = JSONObject(text)
-            require(root.optString("app") == "ARIOS")
+            require(root.optString("app") in setOf("Flowfy", "ARIOS"))
             root.optJSONObject("user")?.let { Arios.userStore.replaceAll(it) }
             root.optJSONArray("history")?.let { Arios.history.fromJson(it) }
             root.optJSONObject("settings")?.let { s ->

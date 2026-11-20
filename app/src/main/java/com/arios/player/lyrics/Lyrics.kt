@@ -221,7 +221,7 @@ object LrcWriter {
     fun write(l: Lyrics, title: String? = null, artist: String? = null): String = buildString {
         if (!title.isNullOrBlank()) append("[ti:").append(title).append("]\n")
         if (!artist.isNullOrBlank()) append("[ar:").append(artist).append("]\n")
-        append("[by:ARIOS]\n")
+        append("[by:Flowfy]\n")
         l.lines.forEach { line ->
             if (!l.synced) { append(line.text).append('\n'); return@forEach }
             append(stamp(line.start))

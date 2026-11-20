@@ -22,7 +22,9 @@ import com.arios.player.R
 data class Accent(val id: Int, val nameAr: String, val nameEn: String, val light: Color, val main: Color, val deep: Color, val second: Color)
 
 val ACCENTS = listOf(
-    Accent(0, "زمرّدي آريوس", "ARIOS Emerald", Color(0xFFB8FFE0), Color(0xFF2EE6A0), Color(0xFF0FA968), Color(0xFF19C6A0)),
+    // iridescent blue + orange taken from the Flowfy logo
+    Accent(6, "فلوفاي", "Flowfy", Color(0xFFDDEFFF), Color(0xFF4DB2FF), Color(0xFF2F4FE0), Color(0xFFFF8A4C)),
+    Accent(0, "زمرّدي", "Emerald", Color(0xFFB8FFE0), Color(0xFF2EE6A0), Color(0xFF0FA968), Color(0xFF19C6A0)),
     Accent(1, "ملكي بنفسجي", "Royal", Color(0xFFDCD3FF), Color(0xFF9B7CFF), Color(0xFF5B3FD6), Color(0xFFC77DFF)),
     Accent(2, "محيطي", "Ocean", Color(0xFFBFE9FF), Color(0xFF3DB6FF), Color(0xFF1468D6), Color(0xFF2EE6E6)),
     Accent(3, "غروب", "Sunset", Color(0xFFFFE0C2), Color(0xFFFF8A3D), Color(0xFFD9481C), Color(0xFFFF5C7A)),

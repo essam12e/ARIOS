@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="app_name">ARIOS</string>
+    <string name="app_name">Flowfy</string>
     <string name="about">About</string>
     <string name="about_text">Offline music player with live synced lyrics. No account, no subscription, no ads.</string>
     <string name="add">Add</string>
@@ -78,7 +78,7 @@
     <string name="import_lrc">Import .lrc</string>
     <string name="invalid_lrc">Not a valid lyrics file</string>
     <string name="import_music">Import music files</string>
-    <string name="import_music_hint">MP3, FLAC, M4A, OGG, OPUS, WAV… copied to Music/ARIOS</string>
+    <string name="import_music_hint">MP3, FLAC, M4A, OGG, OPUS, WAV… copied to Music/Flowfy</string>
     <string name="imported_n">Imported %1$d files</string>
     <string name="language">Language</string>
     <string name="lang_system">System default</string>
@@ -120,7 +120,7 @@
     <string name="resume">Resume</string>
     <string name="resume_all">Resume all</string>
     <string name="permission_title">Access your music</string>
-    <string name="permission_text">ARIOS needs permission to read the audio files on your device.</string>
+    <string name="permission_text">Flowfy needs permission to read the audio files on your device.</string>
     <string name="play">Play</string>
     <string name="play_next">Play next</string>
     <string name="playback_speed">Playback speed</string>
@@ -175,14 +175,14 @@
     <string name="version_x">Version %1$s</string>
     <string name="word_by_word">Word-by-word highlight</string>
     <string name="word_by_word_hint">Uses exact word timing when available, otherwise estimates it</string>
-    <string name="widget_desc">Control ARIOS from your home screen</string>
+    <string name="widget_desc">Control Flowfy from your home screen</string>
     <string name="no_match_hint">No exact match. Edit the title/artist and search again, or add the lyrics yourself.</string>
     <string name="best_match">Match</string>
     <string name="show_weak_results">Show %1$d less likely results</string>
     <string name="use_lyrics">Use these lyrics</string>
     <string name="not_synced">Not synced</string>
     <string name="widget_lyrics_desc">Live lyrics of the song that is playing</string>
-    <string name="widget_lyrics_name">ARIOS lyrics</string>
+    <string name="widget_lyrics_name">Flowfy lyrics</string>
     <string name="amoled">AMOLED black</string>
     <string name="amoled_hint">Pure black background – saves battery on OLED screens</string>
     <string name="appearance">Appearance</string>
@@ -272,16 +272,16 @@
     <string name="style_aurora">Aurora</string>
     <string name="style_minimal">Minimal</string>
     <string name="tags_failed">Couldn\'t save: %1$s</string>
-    <string name="tags_hint">%1$s: MP3 and FLAC are written inside the file. Other formats are kept in ARIOS.</string>
-    <string name="tags_saved_app">Saved in ARIOS</string>
+    <string name="tags_hint">%1$s: MP3 and FLAC are written inside the file. Other formats are kept in Flowfy.</string>
+    <string name="tags_saved_app">Saved in Flowfy</string>
     <string name="tags_written">Saved inside the file</string>
     <string name="top_artists">Top artists</string>
     <string name="top_songs">Top songs</string>
     <string name="visualizer">Visualizer</string>
     <string name="visualizer_hint">Bars and rings that move with the music</string>
-    <string name="wrapped_title">Your year in ARIOS</string>
+    <string name="wrapped_title">Your year in Flowfy</string>
     <string name="wrapped_sub">Your listening story, animated</string>
-    <string name="wrapped_card_title">My year in ARIOS</string>
+    <string name="wrapped_card_title">My year in Flowfy</string>
     <string name="wrapped_intro">Your year in music</string>
     <string name="wrapped_intro_sub">Tap to continue</string>
     <string name="wrapped_minutes_pre">You listened for</string>

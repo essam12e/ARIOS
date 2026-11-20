@@ -56,7 +56,7 @@ fun AppRoot(nav: AppNav, hasPermission: Boolean, requestPermission: () -> Unit) 
     val coverPalette = if (Arios.prefs.dynamicColor) rememberArtPalette(player.songId?.let { lib.byId[it] }) else null
     LaunchedEffect(prefsV, coverPalette?.base) {
         val accent = coverPalette?.let { com.arios.player.ui.theme.AriosColors.fromColor(it.base) }
-            ?: com.arios.player.ui.theme.ACCENTS.getOrElse(Arios.prefs.accent) { com.arios.player.ui.theme.ACCENTS[0] }
+            ?: (com.arios.player.ui.theme.ACCENTS.firstOrNull { it.id == Arios.prefs.accent } ?: com.arios.player.ui.theme.ACCENTS[0])
         com.arios.player.ui.theme.AriosColors.apply(accent, Arios.prefs.amoled)
     }
 

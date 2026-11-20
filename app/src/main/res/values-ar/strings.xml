@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="app_name">آريوس</string>
+    <string name="app_name">فلوفاي</string>
     <string name="about">حول التطبيق</string>
     <string name="about_text">مشغل موسيقى مع كلمات متزامنة. بدون حساب ولا اشتراك ولا إعلانات.</string>
     <string name="add">إضافة</string>
@@ -78,7 +78,7 @@
     <string name="import_lrc">استيراد ملف LRC</string>
     <string name="invalid_lrc">ملف كلمات غير صالح</string>
     <string name="import_music">استيراد ملفات صوتية</string>
-    <string name="import_music_hint">MP3 وFLAC وM4A وOGG وOPUS وWAV… تُنسخ إلى Music/ARIOS</string>
+    <string name="import_music_hint">MP3 وFLAC وM4A وOGG وOPUS وWAV… تُنسخ إلى Music/Flowfy</string>
     <string name="imported_n">تم استيراد %1$d ملف</string>
     <string name="language">اللغة</string>
     <string name="lang_system">لغة النظام</string>
@@ -118,7 +118,7 @@
     <string name="resume">استئناف</string>
     <string name="resume_all">استئناف الكل</string>
     <string name="permission_title">الوصول إلى موسيقاك</string>
-    <string name="permission_text">يحتاج آريوس إلى إذن لقراءة الملفات الصوتية على جهازك.</string>
+    <string name="permission_text">يحتاج فلوفاي إلى إذن لقراءة الملفات الصوتية على جهازك.</string>
     <string name="play">تشغيل</string>
     <string name="play_next">تشغيل التالي</string>
     <string name="playback_speed">سرعة التشغيل</string>
@@ -173,14 +173,14 @@
     <string name="version_x">الإصدار %1$s</string>
     <string name="word_by_word">تظليل كلمة بكلمة</string>
     <string name="word_by_word_hint">يستخدم توقيت الكلمات الدقيق إن وُجد وإلا يقدّره تلقائياً</string>
-    <string name="widget_desc">تحكّم بآريوس من الشاشة الرئيسية</string>
+    <string name="widget_desc">تحكّم بفلوفاي من الشاشة الرئيسية</string>
     <string name="no_match_hint">لا توجد نتيجة مطابقة. عدّل العنوان أو الفنان وأعد البحث، أو أضف الكلمات بنفسك.</string>
     <string name="best_match">مطابقة</string>
     <string name="show_weak_results">عرض %1$d نتيجة أقل تطابقاً</string>
     <string name="use_lyrics">استخدام هذه الكلمات</string>
     <string name="not_synced">غير متزامنة</string>
     <string name="widget_lyrics_desc">كلمات الأغنية التي تُشغَّل الآن مباشرة</string>
-    <string name="widget_lyrics_name">كلمات آريوس</string>
+    <string name="widget_lyrics_name">كلمات فلوفاي</string>
     <string name="amoled">أسود AMOLED</string>
     <string name="amoled_hint">خلفية سوداء تماماً – توفّر البطارية في شاشات OLED</string>
     <string name="appearance">المظهر</string>
@@ -270,16 +270,16 @@
     <string name="style_aurora">شفق</string>
     <string name="style_minimal">بسيط</string>
     <string name="tags_failed">تعذّر الحفظ: %1$s</string>
-    <string name="tags_hint">%1$s: ملفات MP3 وFLAC تُحفظ داخل الملف نفسه، والصيغ الأخرى تُحفظ داخل آريوس.</string>
-    <string name="tags_saved_app">حُفظت داخل آريوس</string>
+    <string name="tags_hint">%1$s: ملفات MP3 وFLAC تُحفظ داخل الملف نفسه، والصيغ الأخرى تُحفظ داخل فلوفاي.</string>
+    <string name="tags_saved_app">حُفظت داخل فلوفاي</string>
     <string name="tags_written">حُفظت داخل الملف</string>
     <string name="top_artists">أكثر الفنانين</string>
     <string name="top_songs">أكثر الأغاني</string>
     <string name="visualizer">مؤثرات الصوت المرئية</string>
     <string name="visualizer_hint">أعمدة وحلقات تتحرك مع الموسيقى</string>
-    <string name="wrapped_title">سنتك مع آريوس</string>
+    <string name="wrapped_title">سنتك مع فلوفاي</string>
     <string name="wrapped_sub">قصة استماعك بشكل متحرك</string>
-    <string name="wrapped_card_title">سنتي مع آريوس</string>
+    <string name="wrapped_card_title">سنتي مع فلوفاي</string>
     <string name="wrapped_intro">سنتك الموسيقية</string>
     <string name="wrapped_intro_sub">اضغط للمتابعة</string>
     <string name="wrapped_minutes_pre">استمعت لمدة</string>

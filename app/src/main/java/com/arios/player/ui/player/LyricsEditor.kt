@@ -31,7 +31,7 @@ import com.arios.player.ui.theme.lyricStyle
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
-private class EditLine(text: String, time: Long?) {
+private class EditLine(text: String, time: Long?, val translation: Boolean = false) {
     var text by mutableStateOf(text)
     var time by mutableStateOf(time)
 }
@@ -51,6 +51,7 @@ fun LyricsEditorScreen(nav: AppNav, songId: Long, bottomPadding: androidx.compos
     val lines = remember { mutableStateListOf<EditLine>() }
     var cursor by remember { mutableIntStateOf(0) }
     var autoBusy by remember { mutableStateOf(false) }
+    var confirmReset by remember { mutableStateOf(false) }
     val player by Arios.player.state.collectAsState()
 
     LaunchedEffect(songId) {
@@ -65,7 +66,7 @@ fun LyricsEditorScreen(nav: AppNav, songId: Long, bottomPadding: androidx.compos
         val parsed = LrcParser.parse(raw, "edit", song.durationMs)
         lines.clear()
         if (parsed != null && parsed.synced) {
-            parsed.lines.forEach { lines += EditLine(it.text, it.start); it.translation?.let { t -> lines += EditLine(t, it.start) } }
+            parsed.lines.forEach { lines += EditLine(it.text, it.start); it.translation?.let { t -> lines += EditLine(t, it.start, translation = true) } }
         } else raw.lines().map { it.trim() }.forEach { lines += EditLine(it, null) }
         while (lines.isNotEmpty() && lines.last().text.isBlank()) lines.removeAt(lines.lastIndex)
         cursor = lines.indexOfFirst { it.time == null }.let { if (it < 0) 0 else it }
@@ -87,6 +88,7 @@ fun LyricsEditorScreen(nav: AppNav, songId: Long, bottomPadding: androidx.compos
                 Text(stringResource(R.string.edit_lyrics), style = MaterialTheme.typography.titleLarge)
                 Text(song.title, style = MaterialTheme.typography.bodySmall, color = AriosColors.SilverDim, maxLines = 1)
             }
+            TextButton(onClick = { confirmReset = true }) { Text(stringResource(R.string.reset_sync)) }
             Button(onClick = { save() }, colors = ButtonDefaults.buttonColors(AriosColors.Silver, AriosColors.Black)) { Text(stringResource(R.string.save)) }
             Spacer(Modifier.width(8.dp))
         }
@@ -108,7 +110,7 @@ fun LyricsEditorScreen(nav: AppNav, songId: Long, bottomPadding: androidx.compos
         }, onAuto = {
             scope.launch {
                 autoBusy = true
-                val texts = lines.filter { it.text.isNotBlank() }
+                val texts = lines.filter { it.text.isNotBlank() && !it.translation }
                 val lrc = kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.Default) {
                     com.arios.player.lyrics.AutoSync.decode(context, song.uri)?.let { pcm ->
                         com.arios.player.lyrics.AutoSync.syncPcm(pcm, texts.map { it.text.trim() })
@@ -116,13 +118,41 @@ fun LyricsEditorScreen(nav: AppNav, songId: Long, bottomPadding: androidx.compos
                 }
                 val parsed = lrc?.let { LrcParser.parse(it, "auto", song.durationMs) }
                 if (parsed != null && parsed.lines.size == texts.size) {
+                    // automatic timing replaces every manual timing, then is saved right away
                     texts.forEachIndexed { i, l -> l.time = parsed.lines[i].start }
-                    nav.snack = context.getString(R.string.auto_sync_done)
+                    var last: Long? = null
+                    lines.forEach { l -> if (l.translation || l.text.isBlank()) l.time = if (l.translation) last else null else last = l.time }
+                    Arios.lyrics.saveRaw(song, linesToText(), com.arios.player.lyrics.LyricsRepository.AUTO_SYNC)
+                    Arios.userStore.setOffset(song.key, 0)
+                    nav.snack = context.getString(R.string.auto_sync_applied)
                 } else nav.snack = context.getString(R.string.auto_sync_failed)
                 autoBusy = false
             }
         }, autoBusy = autoBusy)
     }
+    if (confirmReset) AlertDialog(
+        onDismissRequest = { confirmReset = false },
+        title = { Text(stringResource(R.string.reset_sync_q)) },
+        text = { Text(stringResource(R.string.reset_sync_hint)) },
+        confirmButton = {
+            TextButton(onClick = {
+                confirmReset = false
+                scope.launch {
+                    // back to plain words: no timing, no offset, and no automatic re-sync for this song
+                    if (lines.isEmpty()) textToLines()
+                    lines.forEach { it.time = null }
+                    val plain = lines.filter { it.text.isNotBlank() && !it.translation }.joinToString("\n") { it.text }
+                    raw = plain
+                    cursor = 0
+                    if (plain.isNotBlank()) Arios.lyrics.saveRaw(song, plain, "Manual")
+                    Arios.lyrics.markNoAutoSync(song)
+                    Arios.userStore.setOffset(song.key, 0)
+                    nav.snack = context.getString(R.string.reset_sync_done)
+                }
+            }) { Text(stringResource(R.string.reset_sync)) }
+        },
+        dismissButton = { TextButton(onClick = { confirmReset = false }) { Text(stringResource(R.string.cancel)) } },
+    )
 }
 
 @Composable

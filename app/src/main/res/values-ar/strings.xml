@@ -301,4 +301,10 @@
     <string name="auto_sync_then_fix">يوقّت كل سطر من الصوت، وبعدها تقدر تضبطه</string>
     <string name="auto_sync_setting">مزامنة الكلمات غير المتزامنة تلقائياً</string>
     <string name="auto_sync_setting_hint">يبحث عن نسخة متزامنة أو يوقّت الأسطر من صوت المغني على جوالك</string>
+    <string name="developed_by">تطوير بابلو</string>
+    <string name="reset_sync">إعادة ضبط</string>
+    <string name="reset_sync_q">إعادة ضبط التوقيت؟</string>
+    <string name="reset_sync_hint">تنحذف كل التوقيتات وترجع الكلمات نص عادي كأنها ما تزامنت أبداً.</string>
+    <string name="reset_sync_done">تمت إعادة الضبط</string>
+    <string name="auto_sync_applied">تم اعتماد المزامنة التلقائية بدل اليدوية</string>
 </resources>

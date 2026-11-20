@@ -303,4 +303,10 @@
     <string name="auto_sync_then_fix">Times every line from the audio, then you can fine-tune</string>
     <string name="auto_sync_setting">Sync plain lyrics automatically</string>
     <string name="auto_sync_setting_hint">Finds a synced version or times the lines from the song\'s vocals, on your phone</string>
+    <string name="developed_by">Developed by Bablo</string>
+    <string name="reset_sync">Reset</string>
+    <string name="reset_sync_q">Reset the timing?</string>
+    <string name="reset_sync_hint">All timings are removed and the lyrics go back to plain words, as if they were never synced.</string>
+    <string name="reset_sync_done">Timing removed</string>
+    <string name="auto_sync_applied">Auto sync applied – it replaced the manual timing</string>
 </resources>

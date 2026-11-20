@@ -18,6 +18,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
@@ -143,7 +144,23 @@ fun SettingsScreen(nav: AppNav, bottomPadding: androidx.compose.ui.unit.Dp) {
             Column {
                 Text(stringResource(R.string.app_name), style = MaterialTheme.typography.titleLarge)
                 Text(stringResource(R.string.version_x, BuildConfigInfo.VERSION), color = AriosColors.SilverDim)
-                Text(stringResource(R.string.about_text), style = MaterialTheme.typography.bodySmall, color = AriosColors.SilverDim)
+                Text(stringResource(R.string.developed_by), style = MaterialTheme.typography.bodyMedium, color = AriosColors.TextPrimary)
+                val ctx = LocalContext.current
+                Row(
+                    Modifier.padding(top = 6.dp).clip(androidx.compose.foundation.shape.CircleShape)
+                        .background(Color(0xFF25D366).copy(alpha = 0.16f))
+                        .clickable {
+                            runCatching {
+                                ctx.startActivity(android.content.Intent(android.content.Intent.ACTION_VIEW, android.net.Uri.parse("https://wa.me/966531098278")))
+                            }
+                        }.padding(horizontal = 14.dp, vertical = 8.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
+                    Icon(Icons.Filled.Chat, null, tint = Color(0xFF25D366), modifier = Modifier.size(18.dp))
+                    Spacer(Modifier.width(8.dp))
+                    Text("+966 53 109 8278", style = MaterialTheme.typography.labelLarge, color = Color(0xFF25D366),
+                        modifier = Modifier, textAlign = androidx.compose.ui.text.style.TextAlign.Start)
+                }
             }
         }
     }

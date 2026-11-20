@@ -110,6 +110,12 @@ class LyricsRepository(private val context: Context) {
 
     private fun syncFailFile(song: Song) = File(dir, hash(song.key) + ".nosync")
 
+    /** The user reset the timing: never re-time this song automatically. */
+    suspend fun markNoAutoSync(song: Song) = withContext(Dispatchers.IO) {
+        synchronized(syncTried) { syncTried += song.key }
+        runCatching { syncFailFile(song).writeText("user") }
+    }
+
     /** Starts automatic timing once per song (skipped if it already failed for this song). */
     fun requestSync(song: Song, plain: Lyrics, allowNetwork: Boolean, force: Boolean = false) {
         synchronized(syncTried) {
@@ -129,14 +135,14 @@ class LyricsRepository(private val context: Context) {
         try {
             if (allowNetwork) {
                 val online = withTimeoutOrNull(25_000) { findSyncedMatching(song, plain) }
-                if (online != null) { save(song, online, manual = false); syncFailFile(song).delete(); return true }
+                if (online != null) { save(song, online, manual = false); Arios.userStore.setOffset(song.key, 0); syncFailFile(song).delete(); return true }
             }
             val lines = plain.lines.map { it.text.trim() }.filter { it.isNotEmpty() && !it.matches(SECTION) }
             val lrc = withContext(Dispatchers.Default) {
                 val pcm = AutoSync.decode(context, song.uri) ?: return@withContext null
                 AutoSync.syncPcm(pcm, lines)
             }
-            if (lrc != null) { saveRaw(song, lrc, AUTO_SYNC); syncFailFile(song).delete(); return true }
+            if (lrc != null) { saveRaw(song, lrc, AUTO_SYNC); Arios.userStore.setOffset(song.key, 0); syncFailFile(song).delete(); return true }
             withContext(Dispatchers.IO) { runCatching { syncFailFile(song).writeText("") } }
             return false
         } finally {

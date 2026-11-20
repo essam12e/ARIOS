@@ -85,13 +85,20 @@ final class Player: ObservableObject {
         }
     }
 
+    /// Starting a node while the engine is stopped raises an exception, so always go through here.
+    private func playNode(_ i: Int) {
+        startEngine()
+        guard engine.isRunning else { isPlaying = false; return }
+        nodes[i].play()
+    }
+
     private func recoverEngine() {
         let pos = positionMs()
         let wasPlaying = isPlaying
         guard file != nil else { return }
         startEngine()
         seek(to: pos)
-        if wasPlaying { nodes[active].play() } else { isPlaying = false }
+        if wasPlaying { playNode(active) } else { isPlaying = false }
     }
 
     func applyEQ() {
@@ -241,9 +248,9 @@ final class Player: ObservableObject {
         startEngine()
         // the engine stopped (interruption / route change): reschedule from the saved position
         if stopped { seek(to: pausedPos) }
-        if !nodes[active].isPlaying { nodes[active].play() }
         mixers[active].outputVolume = trackGain[active]
         isPlaying = true
+        if !nodes[active].isPlaying { playNode(active) }
         updateNowPlaying()
     }
 
@@ -309,12 +316,12 @@ final class Player: ObservableObject {
             self.startEngine()
             if crossfade {
                 self.mixers[a].outputVolume = 0
-                self.nodes[a].play()
-                self.beginCrossfade(from: 1 - a, to: a)
                 self.isPlaying = true
+                self.playNode(a)
+                self.beginCrossfade(from: 1 - a, to: a)
             } else {
                 self.mixers[a].outputVolume = self.trackGain[a]
-                if autoplay { self.nodes[a].play(); self.isPlaying = true } else { self.isPlaying = false; self.pausedPos = start }
+                if autoplay { self.isPlaying = true; self.playNode(a) } else { self.isPlaying = false; self.pausedPos = start }
             }
             self.updateNowPlaying()
             self.saveState()
@@ -346,7 +353,7 @@ final class Player: ObservableObject {
         let wasPlaying = isPlaying
         nodes[active].stop()
         schedule(from: max(0, min(ms, durationMs - 200)), generation: g)
-        if wasPlaying { startEngine(); nodes[active].play() }
+        if wasPlaying { startEngine(); playNode(active) }
         updateNowPlaying()
     }
 

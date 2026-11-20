@@ -28,6 +28,7 @@ import com.arios.player.ui.Screen
 import com.arios.player.ui.components.Artwork
 import com.arios.player.ui.components.displayArtist
 import com.arios.player.ui.theme.AriosColors
+import com.arios.player.ui.theme.glowHalo
 
 @Composable
 fun FullLyricsScreen(nav: AppNav) {
@@ -43,8 +44,8 @@ fun FullLyricsScreen(nav: AppNav) {
     val unknown = stringResource(R.string.unknown)
     BackHandler { nav.lyricsFull = false }
 
-    Box(Modifier.fillMaxSize().background(AriosColors.Black).background(Brush.verticalGradient(listOf(palette.card, lerpBlack(palette.card))))
-        .clickable(enabled = false) {}) {
+    Box(Modifier.fillMaxSize().background(AriosColors.Black).clickable(enabled = false) {}) {
+        com.arios.player.ui.theme.AuroraBackground(tint = palette.base, intensity = 1.6f)
         Column(Modifier.fillMaxSize().systemBarsPadding()) {
             Row(Modifier.fillMaxWidth().padding(8.dp), verticalAlignment = Alignment.CenterVertically) {
                 IconButton(onClick = { nav.lyricsFull = false }) { Icon(Icons.Filled.KeyboardArrowDown, stringResource(R.string.close), Modifier.size(30.dp), tint = Color.White) }
@@ -83,7 +84,7 @@ fun FullLyricsScreen(nav: AppNav) {
                 Ltr { Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.Center, verticalAlignment = Alignment.CenterVertically) {
                     IconButton(onClick = { Arios.player.previous() }) { Icon(Icons.Filled.SkipPrevious, null, Modifier.size(34.dp), tint = Color.White) }
                     Spacer(Modifier.width(18.dp))
-                    Box(Modifier.size(60.dp).clip(CircleShape).background(Color.White).clickable { Arios.player.toggle() }, contentAlignment = Alignment.Center) {
+                    Box(Modifier.size(60.dp).glowHalo(state.isPlaying).clip(CircleShape).background(AriosColors.brand).clickable { Arios.player.toggle() }, contentAlignment = Alignment.Center) {
                         Icon(if (state.isPlaying) Icons.Filled.Pause else Icons.Filled.PlayArrow, null, Modifier.size(34.dp), tint = Color.Black)
                     }
                     Spacer(Modifier.width(18.dp))

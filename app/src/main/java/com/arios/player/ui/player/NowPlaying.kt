@@ -7,6 +7,8 @@ import androidx.activity.compose.BackHandler
 import androidx.compose.animation.core.Animatable
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
+import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.basicMarquee
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.gestures.detectHorizontalDragGestures
@@ -46,6 +48,7 @@ import com.arios.player.ui.Screen
 import com.arios.player.ui.components.Artwork
 import com.arios.player.ui.components.displayArtist
 import com.arios.player.ui.theme.AriosColors
+import com.arios.player.ui.theme.glass
 import kotlinx.coroutines.launch
 
 @Composable
@@ -65,9 +68,9 @@ fun NowPlayingScreen(nav: AppNav) {
     Box(
         Modifier.fillMaxSize()
             .background(AriosColors.Black)
-            .background(Brush.verticalGradient(listOf(palette.base.copy(alpha = 0.9f), palette.background, AriosColors.Black)))
             .clickable(enabled = false) {},
     ) {
+        com.arios.player.ui.theme.AuroraBackground(tint = palette.base, intensity = 1.5f)
         if (landscape) {
             Row(Modifier.fillMaxSize().systemBarsPadding().padding(horizontal = 16.dp)) {
                 Column(Modifier.weight(1f).fillMaxHeight().verticalScroll(rememberScrollState())) {
@@ -172,8 +175,19 @@ private fun CoverArt(song: Song?, modifier: Modifier) {
                     },
                 ) { _, d -> scope.launch { offset.snapTo(offset.value + d) } }
             }
-            .shadow(24.dp, RoundedCornerShape(18.dp)),
-    ) { Artwork(song?.artKey(), Modifier.fillMaxSize(), RoundedCornerShape(18.dp), 96.dp) }
+            .then(if (android.os.Build.VERSION.SDK_INT >= 28) Modifier.shadow(36.dp, RoundedCornerShape(22.dp), ambientColor = AriosColors.Mint, spotColor = AriosColors.Mint) else Modifier.shadow(24.dp, RoundedCornerShape(22.dp))),
+    ) {
+        androidx.compose.animation.AnimatedContent(
+            targetState = song,
+            transitionSpec = {
+                (androidx.compose.animation.fadeIn(androidx.compose.animation.core.tween(380)) +
+                    androidx.compose.animation.scaleIn(androidx.compose.animation.core.spring(dampingRatio = 0.6f, stiffness = 260f), initialScale = 0.82f)) togetherWith
+                    (androidx.compose.animation.fadeOut(androidx.compose.animation.core.tween(220)) + androidx.compose.animation.scaleOut(targetScale = 1.08f))
+            },
+            contentKey = { it?.id },
+            label = "cover",
+        ) { s -> Artwork(s?.artKey(), Modifier.fillMaxSize().border(1.dp, Brush.linearGradient(listOf(Color.White.copy(alpha = 0.35f), AriosColors.Mint.copy(alpha = 0.3f), Color.Transparent)), RoundedCornerShape(22.dp)), RoundedCornerShape(22.dp), 96.dp) }
+    }
 }
 
 @OptIn(ExperimentalFoundationApi::class)
@@ -219,7 +233,7 @@ fun LyricsCard(nav: AppNav, song: Song?, palette: ArtPalette, modifier: Modifier
     val offsets by Arios.userStore.lyricOffsets.collectAsState()
     @Suppress("UNUSED_VARIABLE") val v by Arios.prefs.version.collectAsState()
     val prefs = Arios.prefs
-    Column(modifier.clip(RoundedCornerShape(22.dp)).background(palette.card)) {
+    Column(modifier.background(androidx.compose.ui.graphics.lerp(palette.card, AriosColors.Black, 0.35f), RoundedCornerShape(26.dp)).glass(RoundedCornerShape(26.dp), fill = 0.10f, tint = androidx.compose.ui.graphics.lerp(palette.base, Color.White, 0.35f)).clip(RoundedCornerShape(26.dp))) {
         Row(Modifier.fillMaxWidth().clickable { nav.lyricsFull = true }.padding(start = 18.dp, end = 8.dp, top = 12.dp, bottom = 4.dp),
             verticalAlignment = Alignment.CenterVertically) {
             Text(stringResource(R.string.lyrics), style = MaterialTheme.typography.titleMedium, color = Color.White, modifier = Modifier.weight(1f))
@@ -241,7 +255,7 @@ fun LyricsBody(nav: AppNav, song: Song?, ls: LyricsState, offset: Long, fontSize
         active = Color.White,
         inactive = Color.White.copy(alpha = if (onCard) 0.45f else 0.38f),
         past = Color.White.copy(alpha = if (onCard) 0.6f else 0.5f),
-        glow = Color.White.copy(alpha = 0.55f),
+        glow = AriosColors.Mint.copy(alpha = 0.85f),
     )
     when (ls) {
         is LyricsState.Ready -> if (ls.lyrics.synced) SyncedLyricsView(

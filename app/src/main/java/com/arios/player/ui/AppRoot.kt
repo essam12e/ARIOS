@@ -31,6 +31,10 @@ import com.arios.player.ui.player.*
 import com.arios.player.ui.search.SearchScreen
 import com.arios.player.ui.settings.SettingsScreen
 import com.arios.player.ui.theme.AriosColors
+import com.arios.player.ui.theme.bounceClick
+import com.arios.player.ui.theme.glass
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.spring
 
 @Composable
 fun AppRoot(nav: AppNav, hasPermission: Boolean, requestPermission: () -> Unit) {
@@ -44,7 +48,8 @@ fun AppRoot(nav: AppNav, hasPermission: Boolean, requestPermission: () -> Unit) 
     val miniVisible = player.hasMedia
     val bottomPadding = (if (miniVisible) 76.dp else 0.dp) + 84.dp
 
-    Box(Modifier.fillMaxSize().background(MaterialTheme.colorScheme.background)) {
+    Box(Modifier.fillMaxSize().background(AriosColors.Black)) {
+        com.arios.player.ui.theme.AuroraBackground()
         val top = nav.stack.lastOrNull()
         AnimatedContent(
             targetState = top ?: nav.tab,
@@ -65,7 +70,7 @@ fun AppRoot(nav: AppNav, hasPermission: Boolean, requestPermission: () -> Unit) 
 
         // bottom gradient + mini player + nav bar
         Column(Modifier.align(Alignment.BottomCenter).fillMaxWidth()
-            .background(Brush.verticalGradient(listOf(Color.Transparent, AriosColors.Black.copy(alpha = 0.92f), AriosColors.Black)))
+            .background(Brush.verticalGradient(listOf(Color.Transparent, AriosColors.Black.copy(alpha = 0.75f), AriosColors.Black.copy(alpha = 0.95f))))
             .navigationBarsPadding().padding(top = 18.dp)) {
             MiniPlayer(nav)
             Spacer(Modifier.height(8.dp))
@@ -99,7 +104,7 @@ private fun BottomBar(nav: AppNav) {
     val tasks by Arios.downloader.tasks.collectAsState()
     val active = tasks.count { it.state == com.arios.player.download.DlState.RUNNING || it.state == com.arios.player.download.DlState.QUEUED }
     Row(
-        Modifier.fillMaxWidth().padding(horizontal = 12.dp).clip(CircleShape).background(AriosColors.Surface).padding(6.dp),
+        Modifier.fillMaxWidth().padding(horizontal = 12.dp).background(AriosColors.Surface, CircleShape).glass(CircleShape, glow = AriosColors.Mint.copy(alpha = 0.5f), fill = 0.06f).padding(6.dp),
         horizontalArrangement = Arrangement.SpaceBetween,
     ) {
         NavItem(Icons.Filled.LibraryMusic, stringResource(R.string.library), nav.tab == Tab.LIBRARY && nav.stack.isEmpty()) { nav.selectTab(Tab.LIBRARY) }
@@ -111,9 +116,10 @@ private fun BottomBar(nav: AppNav) {
 
 @Composable
 private fun RowScope.NavItem(icon: ImageVector, label: String, selected: Boolean, badge: Int = 0, onClick: () -> Unit) {
-    val bg by animateColorAsState(if (selected) AriosColors.Silver else Color.Transparent, label = "nav")
+    val alpha by animateFloatAsState(if (selected) 1f else 0f, label = "nav")
+    val w by animateFloatAsState(if (selected) 1.6f else 1f, spring(dampingRatio = 0.6f, stiffness = 300f), label = "w")
     Row(
-        Modifier.weight(if (selected) 1.6f else 1f).clip(CircleShape).background(bg).clickable(onClick = onClick).padding(vertical = 12.dp),
+        Modifier.weight(w).clip(CircleShape).background(AriosColors.brandHorizontal, alpha = alpha).bounceClick(onClick = onClick).padding(vertical = 12.dp),
         horizontalArrangement = Arrangement.Center, verticalAlignment = Alignment.CenterVertically,
     ) {
         BadgedBox(badge = { if (badge > 0) Badge(containerColor = AriosColors.Mint) { Text("$badge") } }) {

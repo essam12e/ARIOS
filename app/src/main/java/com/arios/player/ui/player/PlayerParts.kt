@@ -31,12 +31,15 @@ import com.arios.player.data.Song
 import com.arios.player.playback.PlayerUiState
 import com.arios.player.ui.components.formatTime
 import com.arios.player.ui.theme.AriosColors
+import com.arios.player.ui.theme.bounceClick
+import com.arios.player.ui.theme.glass
+import com.arios.player.ui.theme.glowHalo
 import kotlinx.coroutines.delay
 
 /** Colours extracted from the album art (Spotify-like dynamic background). */
 data class ArtPalette(val base: Color, val background: Color, val card: Color)
 
-private val defaultPalette = ArtPalette(Color(0xFF3A3F47), Color(0xFF1A1C20), Color(0xFF2E3238))
+private val defaultPalette = ArtPalette(Color(0xFF0F7A50), Color(0xFF062418), Color(0xFF0B3324))
 
 @Composable
 fun rememberArtPalette(song: Song?): ArtPalette {
@@ -82,7 +85,7 @@ fun SeekBar(state: PlayerUiState, modifier: Modifier = Modifier, color: Color = 
             onValueChange = { dragging = it },
             onValueChangeFinished = { dragging?.let { Arios.player.seekTo((it * dur).toLong()) }; dragging = null },
             colors = SliderDefaults.colors(
-                thumbColor = color, activeTrackColor = color, inactiveTrackColor = color.copy(alpha = 0.22f),
+                thumbColor = AriosColors.MintLight, activeTrackColor = AriosColors.Mint, inactiveTrackColor = color.copy(alpha = 0.18f),
             ),
             modifier = Modifier.fillMaxWidth().height(28.dp),
         )
@@ -101,11 +104,11 @@ fun TransportControls(state: PlayerUiState, modifier: Modifier = Modifier, big: 
         IconButton(onClick = { Arios.player.setShuffle(!state.shuffle) }) {
             Icon(Icons.Filled.Shuffle, stringResource(R.string.shuffle), tint = if (state.shuffle) AriosColors.Mint else Color.White.copy(alpha = 0.85f))
         }
-        IconButton(onClick = { Arios.player.previous() }, Modifier.size(56.dp)) {
+        IconButton(onClick = { Arios.player.previous() }, Modifier.size(56.dp).bounceClick { Arios.player.previous() }) {
             Icon(Icons.Filled.SkipPrevious, stringResource(R.string.previous), Modifier.size(40.dp), tint = Color.White)
         }
         Box(
-            Modifier.size(playSize).clip(CircleShape).background(Color.White).clickable { Arios.player.toggle() },
+            Modifier.size(playSize).glowHalo(state.isPlaying).clip(CircleShape).background(AriosColors.brand).bounceClick { Arios.player.toggle() },
             contentAlignment = Alignment.Center,
         ) {
             if (state.buffering && !state.isPlaying) CircularProgressIndicator(Modifier.size(28.dp), color = Color.Black, strokeWidth = 3.dp)
@@ -115,7 +118,7 @@ fun TransportControls(state: PlayerUiState, modifier: Modifier = Modifier, big: 
                 Modifier.size(playSize * 0.55f), tint = Color.Black,
             )
         }
-        IconButton(onClick = { Arios.player.next() }, Modifier.size(56.dp)) {
+        IconButton(onClick = { Arios.player.next() }, Modifier.size(56.dp).bounceClick { Arios.player.next() }) {
             Icon(Icons.Filled.SkipNext, stringResource(R.string.next), Modifier.size(40.dp), tint = Color.White)
         }
         IconButton(onClick = { Arios.player.cycleRepeat() }) {
@@ -132,7 +135,7 @@ fun TransportControls(state: PlayerUiState, modifier: Modifier = Modifier, big: 
 @Composable
 fun ActionChip(icon: androidx.compose.ui.graphics.vector.ImageVector, label: String?, tint: Color = Color.White, onClick: () -> Unit) {
     Row(
-        Modifier.clip(CircleShape).background(Color.White.copy(alpha = 0.1f)).clickable(onClick = onClick)
+        Modifier.glass(CircleShape, fill = 0.08f).clip(CircleShape).bounceClick(onClick = onClick)
             .padding(horizontal = 16.dp, vertical = 10.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {

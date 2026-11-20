@@ -13,38 +13,47 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.style.TextDirection
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.arios.player.Arios
 import com.arios.player.R
 import com.arios.player.lyrics.LrcParser
-import com.arios.player.lyrics.LyricsCandidate
+import com.arios.player.lyrics.Lyrics
+import com.arios.player.lyrics.LyricsQuery
+import com.arios.player.lyrics.ScoredCandidate
 import com.arios.player.ui.AppNav
 import com.arios.player.ui.components.Pill
 import com.arios.player.ui.components.formatTime
 import com.arios.player.ui.theme.AriosColors
+import com.arios.player.ui.theme.lyricStyle
 import kotlinx.coroutines.launch
 
-/** Manual lyrics search across LRCLIB / NetEase / QQ Music / Lyrics.ovh + import of .lrc files. */
+/** Manual lyrics search: clean query, ranked results, preview before saving, .lrc import. */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun LyricsSearchSheet(nav: AppNav) {
     val song = nav.lyricsSearchFor ?: return
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
-    val q0 = remember(song) { Arios.lyrics.queryFor(song) }
-    var title by remember(song) { mutableStateOf(q0.title) }
-    var artist by remember(song) { mutableStateOf(q0.artist) }
+    val auto = remember(song) { Arios.lyrics.queriesFor(song) }
+    var title by remember(song) { mutableStateOf(auto.first().title) }
+    var artist by remember(song) { mutableStateOf(auto.first().artist) }
     var loading by remember { mutableStateOf(false) }
-    var applying by remember { mutableStateOf<LyricsCandidate?>(null) }
-    var results by remember(song) { mutableStateOf<List<LyricsCandidate>?>(null) }
+    var results by remember(song) { mutableStateOf<List<ScoredCandidate>?>(null) }
+    var showWeak by remember(song) { mutableStateOf(false) }
+    var preview by remember { mutableStateOf<Pair<ScoredCandidate, Lyrics?>?>(null) }
+    var previewLoading by remember { mutableStateOf(false) }
 
     fun search() {
         loading = true
         scope.launch {
-            results = Arios.lyrics.searchAll(q0.copy(title = title, artist = artist))
+            val typed = LyricsQuery(title.trim(), artist.trim(), null, song.durationMs)
+            val qs = (listOf(typed) + auto).distinct()
+            results = Arios.lyrics.searchAll(qs)
             loading = false
         }
     }
@@ -80,23 +89,22 @@ fun LyricsSearchSheet(nav: AppNav) {
         }
         Spacer(Modifier.height(8.dp))
         if (loading) LinearProgressIndicator(Modifier.fillMaxWidth().padding(horizontal = 20.dp), color = AriosColors.Mint)
+        val all = results.orEmpty()
+        val good = all.filter { it.score.title >= 0.5 && (it.score.durationDiff ?: 0.0) <= 20 }
+        val weak = all - good.toSet()
+        val shown = if (showWeak) good + weak else good
         LazyColumn(Modifier.fillMaxHeight(0.75f), contentPadding = PaddingValues(bottom = 24.dp)) {
-            val list = results
-            if (list != null && list.isEmpty() && !loading) item {
-                Text(stringResource(R.string.no_results), Modifier.padding(20.dp), color = AriosColors.SilverDim)
+            if (results != null && good.isEmpty() && !loading) item {
+                Text(stringResource(R.string.no_match_hint), Modifier.padding(20.dp), color = AriosColors.SilverDim)
             }
-            items(list ?: emptyList()) { c ->
+            items(shown) { sc ->
+                val c = sc.candidate
                 Row(
-                    Modifier.fillMaxWidth().clickable(enabled = applying == null) {
-                        applying = c
+                    Modifier.fillMaxWidth().clickable(enabled = !previewLoading) {
+                        previewLoading = true
                         scope.launch {
-                            val l = runCatching { c.load() }.getOrNull()
-                            if (l != null && l.lines.isNotEmpty()) {
-                                Arios.lyrics.save(song, l, manual = false)
-                                nav.snack = context.getString(R.string.lyrics_saved)
-                                nav.lyricsSearchFor = null
-                            } else nav.snack = context.getString(R.string.no_lyrics)
-                            applying = null
+                            preview = sc to runCatching { c.load() }.getOrNull()
+                            previewLoading = false
                         }
                     }.padding(horizontal = 20.dp, vertical = 10.dp),
                     verticalAlignment = Alignment.CenterVertically,
@@ -107,15 +115,52 @@ fun LyricsSearchSheet(nav: AppNav) {
                             style = MaterialTheme.typography.bodySmall, color = AriosColors.SilverDim)
                         Spacer(Modifier.height(4.dp))
                         Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                            if (sc.confident) Pill(stringResource(R.string.best_match), color = Color(0xFF0F5A3A))
                             Pill(c.sourceName)
                             c.durationSec?.let { Pill(formatTime(it * 1000L)) }
-                            if (c.syncedHint == true) Pill(stringResource(R.string.synced), color = androidx.compose.ui.graphics.Color(0xFF1E3A2E))
+                            if (c.syncedHint == true) Pill(stringResource(R.string.synced), color = Color(0xFF14382A))
                         }
                     }
-                    if (applying == c) CircularProgressIndicator(Modifier.size(22.dp), strokeWidth = 2.dp)
-                    else Icon(Icons.Filled.Download, null, tint = AriosColors.SilverDim)
+                    Icon(Icons.Filled.Visibility, null, tint = AriosColors.SilverDim)
+                }
+            }
+            if (weak.isNotEmpty() && !showWeak) item {
+                TextButton(onClick = { showWeak = true }, modifier = Modifier.padding(horizontal = 12.dp)) {
+                    Text(stringResource(R.string.show_weak_results, weak.size))
                 }
             }
         }
     }
+    if (previewLoading) Dialog { CircularProgressIndicator(color = AriosColors.Mint) }
+    preview?.let { (sc, lyrics) ->
+        AlertDialog(
+            onDismissRequest = { preview = null },
+            title = { Text(sc.candidate.title, maxLines = 2, overflow = TextOverflow.Ellipsis) },
+            text = {
+                if (lyrics == null || lyrics.lines.isEmpty()) Text(stringResource(R.string.no_lyrics))
+                else Column {
+                    Text("${sc.candidate.sourceName} • ${if (lyrics.synced) stringResource(R.string.synced) else stringResource(R.string.not_synced)}",
+                        style = MaterialTheme.typography.labelMedium, color = AriosColors.Mint)
+                    Spacer(Modifier.height(8.dp))
+                    lyrics.lines.filter { it.text.isNotBlank() }.take(10).forEach {
+                        Text(it.text, style = lyricStyle(15).copy(textDirection = TextDirection.Content), modifier = Modifier.fillMaxWidth())
+                    }
+                }
+            },
+            confirmButton = {
+                TextButton(enabled = lyrics != null && lyrics.lines.isNotEmpty(), onClick = {
+                    scope.launch {
+                        Arios.lyrics.save(song, lyrics!!, manual = false)
+                        nav.snack = context.getString(R.string.lyrics_saved)
+                        preview = null; nav.lyricsSearchFor = null
+                    }
+                }) { Text(stringResource(R.string.use_lyrics)) }
+            },
+            dismissButton = { TextButton(onClick = { preview = null }) { Text(stringResource(R.string.cancel)) } },
+        )
+    }
 }
+
+@Composable
+private fun Dialog(content: @Composable () -> Unit) =
+    androidx.compose.ui.window.Dialog(onDismissRequest = {}) { Box(Modifier.size(80.dp), contentAlignment = Alignment.Center) { content() } }

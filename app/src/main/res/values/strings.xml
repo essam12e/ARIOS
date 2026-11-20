@@ -176,4 +176,9 @@
     <string name="word_by_word">Word-by-word highlight</string>
     <string name="word_by_word_hint">Uses exact word timing when available, otherwise estimates it</string>
     <string name="widget_desc">Control ARIOS from your home screen</string>
+    <string name="no_match_hint">No exact match. Edit the title/artist and search again, or add the lyrics yourself.</string>
+    <string name="best_match">Match</string>
+    <string name="show_weak_results">Show %1$d less likely results</string>
+    <string name="use_lyrics">Use these lyrics</string>
+    <string name="not_synced">Not synced</string>
 </resources>

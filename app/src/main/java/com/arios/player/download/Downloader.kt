@@ -204,9 +204,9 @@ class Downloader(private val context: Context) {
         update(id) { it.copy(state = DlState.DONE, resultUri = uri.toString(), downloaded = it.total.coerceAtLeast(it.downloaded)) }
         // artwork + lyrics so the song is complete offline
         withContext(Dispatchers.IO) {
-            val albumId = MediaSaver.albumIdOf(context, uri)
-            if (albumId != null && t.artUrl != null && !Arios.artwork.cacheFile(albumId).exists()) {
-                Arios.artwork.downloadTo(t.artUrl, Arios.artwork.cacheFile(albumId))
+            val songId = runCatching { android.content.ContentUris.parseId(uri) }.getOrNull()
+            if (songId != null && songId >= 0 && t.artUrl != null && !Arios.artwork.songFile(songId).exists()) {
+                Arios.artwork.downloadTo(t.artUrl, Arios.artwork.songFile(songId))
             }
         }
         Arios.library.scan()

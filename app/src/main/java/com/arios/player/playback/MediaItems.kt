@@ -7,7 +7,7 @@ import com.arios.player.data.Song
 
 const val ART_AUTHORITY = "com.arios.player.art"
 
-fun artUri(song: Song): Uri = Uri.parse("content://$ART_AUTHORITY/album/${song.albumId}/${song.id}")
+fun artUri(song: Song): Uri = Uri.parse("content://$ART_AUTHORITY/song/${song.id}")
 
 fun Song.toMediaItem(mediaId: String = "song:$id"): MediaItem = MediaItem.Builder()
     .setMediaId(mediaId)

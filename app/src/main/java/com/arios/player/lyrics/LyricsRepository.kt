@@ -23,34 +23,59 @@ sealed interface LyricsState {
     data object NotFound : LyricsState
 }
 
+data class ScoredCandidate(val candidate: LyricsCandidate, val score: LyricsMatcher.Score) {
+    val confident get() = LyricsMatcher.isConfident(score)
+}
+
 class LyricsRepository(private val context: Context) {
     private val dir = File(context.filesDir, "lyrics").apply { mkdirs() }
     private val memory = LruCache<String, Lyrics>(40)
+    private val noEmbedded = HashSet<String>()
 
-    /** Bumped whenever lyrics for some song are saved/removed so screens reload. */
     private val _revision = MutableStateFlow(0)
     val revision: StateFlow<Int> = _revision
+
+    init {
+        // v2: drop automatically fetched lyrics from v1 (its matching was too loose); keep manual edits
+        val sp = context.getSharedPreferences("arios_prefs", Context.MODE_PRIVATE)
+        if (sp.getInt("lyrics_cache_v", 1) < 2) {
+            dir.listFiles()?.forEach { f ->
+                if (f.extension == "none") f.delete()
+                else if (f.extension == "lrc") {
+                    val head = runCatching { f.bufferedReader().use { it.readLine() } }.getOrNull().orEmpty()
+                    if (!head.startsWith("[re:Manual]") && !head.startsWith("[re:LRC]")) f.delete()
+                }
+            }
+            sp.edit().putInt("lyrics_cache_v", 2).apply()
+        }
+    }
 
     private fun hash(key: String): String =
         MessageDigest.getInstance("SHA-1").digest(key.toByteArray()).joinToString("") { "%02x".format(it) }
 
     private fun fileFor(song: Song) = File(dir, hash(song.key) + ".lrc")
-    private fun missFor(song: Song) = File(dir, hash(song.key) + ".none")
-
-    fun cachedRaw(song: Song): String? = fileFor(song).takeIf { it.exists() }?.readText()
+    private fun missFor(song: Song) = File(dir, hash(song.key) + ".miss")
 
     fun isCached(song: Song) = fileFor(song).exists()
 
-    /** Local only: memory, ARIOS cache and a sidecar .lrc next to the audio file. */
+    private fun readCache(song: Song): Pair<String, Lyrics>? {
+        val f = fileFor(song)
+        if (!f.exists()) return null
+        val raw = f.readText()
+        val src = Regex("""\[re:([^\]]+)]""").find(raw)?.groupValues?.get(1) ?: "ARIOS"
+        return LrcParser.parse(raw, src, song.durationMs)?.let { src to it }
+    }
+
+    /** Local only: lyrics you saved/chose → lyrics embedded in the file → sidecar .lrc. */
     suspend fun getLocal(song: Song): Lyrics? = withContext(Dispatchers.IO) {
         memory.get(song.key)?.let { return@withContext it }
-        val cached = fileFor(song)
-        if (cached.exists()) {
-            val raw = cached.readText()
-            val src = Regex("""\[re:([^\]]+)]""").find(raw)?.groupValues?.get(1) ?: "ARIOS"
-            LrcParser.parse(raw, src, song.durationMs)?.let { memory.put(song.key, it); return@withContext it }
+        readCache(song)?.let { memory.put(song.key, it.second); return@withContext it.second }
+        if (song.key !in noEmbedded) {
+            val text = EmbeddedLyrics.read(context, song.uri)
+            val l = text?.let { LrcParser.parse(it, EMBEDDED, song.durationMs) }
+            if (l != null && l.lines.isNotEmpty()) { memory.put(song.key, l); return@withContext l }
+            noEmbedded += song.key
         }
-        // sidecar file (works on devices/folders where the app can read it)
         runCatching {
             val side = File(song.path.substringBeforeLast('.') + ".lrc")
             if (side.canRead()) LrcParser.parse(side.readText(), "LRC", song.durationMs)?.let {
@@ -60,37 +85,43 @@ class LyricsRepository(private val context: Context) {
         null
     }
 
-    /** Local first, then online sources (if enabled). Results are cached on disk for offline use. */
     suspend fun get(song: Song, allowNetwork: Boolean = Arios.prefs.autoFetchLyrics): Lyrics? {
         getLocal(song)?.let { return it }
         if (!allowNetwork) return null
         val miss = missFor(song)
-        if (miss.exists() && System.currentTimeMillis() - miss.lastModified() < 3L * 24 * 3600 * 1000) return null
-        val best = withTimeoutOrNull(25_000) { autoFind(song) }
-        if (best != null) {
-            save(song, best, manual = false)
-            return best
-        }
+        if (miss.exists() && System.currentTimeMillis() - miss.lastModified() < 24L * 3600 * 1000) return null
+        val best = withTimeoutOrNull(30_000) { autoFind(song) }
+        if (best != null) { save(song, best, manual = false); return best }
         withContext(Dispatchers.IO) { runCatching { miss.writeText("") } }
         return null
     }
 
-    fun queryFor(song: Song): LyricsQuery = LyricsQuery(
-        title = cleanTitle(song.title),
-        artist = song.artist.takeUnless { it == MediaScanner.UNKNOWN } ?: "",
-        album = song.album.takeUnless { it == MediaScanner.UNKNOWN },
-        durationMs = song.durationMs,
-    )
+    fun queriesFor(song: Song): List<LyricsQuery> = LyricsMatcher.queries(
+        song.title,
+        song.artist.takeUnless { it == MediaScanner.UNKNOWN } ?: "",
+        song.album.takeUnless { it == MediaScanner.UNKNOWN },
+        song.durationMs,
+    ).ifEmpty { listOf(LyricsQuery(song.title, "", null, song.durationMs)) }
+
+    fun queryFor(song: Song): LyricsQuery = queriesFor(song).first()
+
+    private suspend fun searchProvider(p: LyricsProvider, queries: List<LyricsQuery>): List<LyricsCandidate> = coroutineScope {
+        queries.take(3).map { q -> async { withTimeoutOrNull(12_000) { runCatching { p.search(q) }.getOrNull() } ?: emptyList() } }
+            .awaitAll().flatten()
+            .distinctBy { "${it.sourceId}|${it.title.lowercase()}|${it.artist.lowercase()}|${it.durationSec}" }
+    }
 
     private suspend fun autoFind(song: Song): Lyrics? {
-        val q = queryFor(song)
+        val queries = queriesFor(song)
         var plainFallback: Lyrics? = null
         for (p in ALL_PROVIDERS.filter { Arios.prefs.sourceEnabled(it.id) }) {
-            val candidates = runCatching { p.search(q) }.getOrDefault(emptyList())
-            val ranked = candidates.sortedByDescending { score(it, q) }.filter { score(it, q) > 0.35 }
+            val ranked = searchProvider(p, queries)
+                .map { ScoredCandidate(it, LyricsMatcher.score(it, queries)) }
+                .filter { it.confident }
+                .sortedByDescending { it.score.total }
             for (c in ranked.take(3)) {
-                val l = runCatching { c.load() }.getOrNull() ?: continue
-                if (l.lines.isEmpty()) continue
+                val l = runCatching { c.candidate.load() }.getOrNull() ?: continue
+                if (l.lines.size < 2) continue
                 if (l.synced) return l
                 if (plainFallback == null) plainFallback = l
             }
@@ -98,41 +129,17 @@ class LyricsRepository(private val context: Context) {
         return plainFallback
     }
 
-    /** Manual search across all enabled sources (used by the "search lyrics" sheet). */
-    suspend fun searchAll(q: LyricsQuery): List<LyricsCandidate> = coroutineScope {
-        ALL_PROVIDERS.filter { Arios.prefs.sourceEnabled(it.id) }.map { p ->
-            async { withTimeoutOrNull(15_000) { runCatching { p.search(q) }.getOrNull() } ?: emptyList() }
-        }.awaitAll().flatten().sortedByDescending { score(it, q) }
+    /** Manual search across all enabled sources, best matches first. */
+    suspend fun searchAll(queries: List<LyricsQuery>): List<ScoredCandidate> = coroutineScope {
+        ALL_PROVIDERS.filter { Arios.prefs.sourceEnabled(it.id) }
+            .map { p -> async { searchProvider(p, queries) } }
+            .awaitAll().flatten()
+            .map { ScoredCandidate(it, LyricsMatcher.score(it, queries)) }
+            .sortedByDescending { it.score.total }
     }
-
-    fun score(c: LyricsCandidate, q: LyricsQuery): Double {
-        var s = 0.0
-        s += similarity(cleanTitle(c.title), q.title) * 0.55
-        if (q.artist.isNotBlank()) s += similarity(c.artist, q.artist) * 0.3 else s += 0.15
-        val d = c.durationSec
-        if (d != null && q.durationMs > 0) {
-            val diff = kotlin.math.abs(d - q.durationMs / 1000.0)
-            s += when { diff <= 2 -> 0.2; diff <= 5 -> 0.1; diff <= 15 -> 0.0; else -> -0.3 }
-        }
-        if (c.syncedHint == true) s += 0.05
-        return s
-    }
-
-    private fun similarity(a: String, b: String): Double {
-        val x = normalise(a); val y = normalise(b)
-        if (x.isEmpty() || y.isEmpty()) return 0.0
-        if (x == y) return 1.0
-        if (x.contains(y) || y.contains(x)) return 0.85
-        val ta = x.split(' ').toSet(); val tb = y.split(' ').toSet()
-        return ta.intersect(tb).size.toDouble() / ta.union(tb).size
-    }
-
-    private fun normalise(s: String) = s.lowercase()
-        .replace(Regex("[^\\p{L}\\p{N} ]"), " ").replace(Regex("\\s+"), " ").trim()
 
     suspend fun save(song: Song, lyrics: Lyrics, manual: Boolean) {
-        val text = LrcWriter.write(lyrics, song.title, song.artist)
-        saveRaw(song, text, if (manual) "Manual" else lyrics.source)
+        saveRaw(song, LrcWriter.write(lyrics, song.title, song.artist), if (manual) "Manual" else lyrics.source)
     }
 
     suspend fun saveRaw(song: Song, lrc: String, source: String = "Manual") = withContext(Dispatchers.IO) {
@@ -146,24 +153,14 @@ class LyricsRepository(private val context: Context) {
     }
 
     suspend fun delete(song: Song) = withContext(Dispatchers.IO) {
-        fileFor(song).delete(); missFor(song).delete(); memory.remove(song.key); _revision.value++
+        fileFor(song).delete(); missFor(song).delete(); memory.remove(song.key); noEmbedded.remove(song.key); _revision.value++
     }
 
     fun allCachedFiles(): List<File> = dir.listFiles { f -> f.extension == "lrc" }?.toList() ?: emptyList()
-    fun clearCache() { dir.listFiles()?.forEach { it.delete() }; memory.evictAll(); _revision.value++ }
+    fun clearCache() { dir.listFiles()?.forEach { it.delete() }; memory.evictAll(); noEmbedded.clear(); _revision.value++ }
 
     companion object {
-        private val noise = listOf(
-            Regex("""\s*[(\[][^)\]]*(official|video|audio|lyric|lyrics|visuali[sz]er|remaster(ed)?|hd|hq|4k|explicit|clean|live|version|edit)[^)\]]*[)\]]""", RegexOption.IGNORE_CASE),
-            Regex("""\s*[(\[]\s*(feat|ft)\.?[^)\]]*[)\]]""", RegexOption.IGNORE_CASE),
-            Regex("""\s+(feat|ft)\.?\s+.*$""", RegexOption.IGNORE_CASE),
-            Regex("""\s*-\s*(remaster(ed)?|official).*$""", RegexOption.IGNORE_CASE),
-            Regex("""^\d{1,3}[.\s-]+"""),
-        )
-        fun cleanTitle(t: String): String {
-            var s = t
-            noise.forEach { s = it.replace(s, "") }
-            return s.replace('_', ' ').trim().ifEmpty { t }
-        }
+        const val EMBEDDED = "Embedded"
+        fun cleanTitle(t: String): String = LyricsMatcher.clean(t).ifEmpty { t }
     }
 }

@@ -158,6 +158,7 @@ private fun LyricLineItem(
             .padding(horizontal = 24.dp, vertical = (fontSize * 0.32f).dp)
             .graphicsLayer {
                 scaleX = scale; scaleY = scale; this.alpha = alpha
+                compositingStrategy = androidx.compose.ui.graphics.CompositingStrategy.ModulateAlpha
                 transformOrigin = androidx.compose.ui.graphics.TransformOrigin(origin, 0.5f)
             }
             .then(if (blurRadius > 0.dp) Modifier.blur(blurRadius) else Modifier),

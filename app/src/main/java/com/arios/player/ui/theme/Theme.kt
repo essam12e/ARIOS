@@ -14,18 +14,24 @@ import androidx.compose.ui.unit.sp
 import com.arios.player.R
 
 object AriosColors {
-    val Black = Color(0xFF050506)
-    val Background = Color(0xFF0B0B0D)
-    val Surface = Color(0xFF141417)
-    val SurfaceHigh = Color(0xFF1D1E22)
-    val SurfaceHighest = Color(0xFF26282D)
-    val Silver = Color(0xFFD9DDE3)
-    val SilverDim = Color(0xFF9EA4AD)
-    val Steel = Color(0xFF6B717B)
-    val Mint = Color(0xFF3DDC97) // accent taken from the original ARIOS emblem
-    val TextPrimary = Color(0xFFF4F5F7)
-    val TextSecondary = Color(0xFFA3A8B0)
-    val silverBrush = Brush.linearGradient(listOf(Color(0xFFF7F8FA), Color(0xFFB9BEC6), Color(0xFF7D838C)))
+    // palette taken from the ARIOS logo: deep green-black + emerald → mint gradient
+    val Black = Color(0xFF010604)
+    val Background = Color(0xFF03100B)
+    val Surface = Color(0xFF0A1A14)
+    val SurfaceHigh = Color(0xFF11241C)
+    val SurfaceHighest = Color(0xFF183126)
+    val Silver = Color(0xFF8DF7C9)       // light mint (primary on dark)
+    val SilverDim = Color(0xFF8DB3A3)
+    val Steel = Color(0xFF4C6C5F)
+    val Mint = Color(0xFF2EE6A0)
+    val Emerald = Color(0xFF0FA968)
+    val MintLight = Color(0xFFB8FFE0)
+    val Teal = Color(0xFF19C6A0)
+    val TextPrimary = Color(0xFFEFFFF8)
+    val TextSecondary = Color(0xFF9DBFB1)
+    val brand = Brush.linearGradient(listOf(MintLight, Mint, Emerald))
+    val brandHorizontal = Brush.horizontalGradient(listOf(Color(0xFF9DFFD6), Mint, Emerald))
+    val silverBrush = brand
 }
 
 /** IBM Plex Sans Arabic SemiBold – used for lyrics and headings (supports Arabic + Latin). */
@@ -37,8 +43,9 @@ private val scheme = darkColorScheme(
     primaryContainer = AriosColors.SurfaceHighest,
     onPrimaryContainer = AriosColors.TextPrimary,
     secondary = AriosColors.Mint,
+    tertiaryContainer = AriosColors.Emerald,
     onSecondary = AriosColors.Black,
-    secondaryContainer = Color(0xFF203029),
+    secondaryContainer = Color(0xFF0F3A29),
     onSecondaryContainer = Color(0xFFBFF5DC),
     tertiary = AriosColors.SilverDim,
     background = AriosColors.Background,
@@ -52,8 +59,8 @@ private val scheme = darkColorScheme(
     surfaceContainer = AriosColors.Surface,
     surfaceContainerHigh = AriosColors.SurfaceHigh,
     surfaceContainerHighest = AriosColors.SurfaceHighest,
-    outline = Color(0xFF3A3D43),
-    outlineVariant = Color(0xFF2A2C31),
+    outline = Color(0xFF2C5A47),
+    outlineVariant = Color(0xFF1A3328),
 )
 
 private val base = Typography()

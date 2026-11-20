@@ -89,7 +89,7 @@ fun LyricsEditorScreen(nav: AppNav, songId: Long, bottomPadding: androidx.compos
             Button(onClick = { save() }, colors = ButtonDefaults.buttonColors(AriosColors.Silver, AriosColors.Black)) { Text(stringResource(R.string.save)) }
             Spacer(Modifier.width(8.dp))
         }
-        TabRow(mode, containerColor = MaterialTheme.colorScheme.background) {
+        TabRow(mode, containerColor = androidx.compose.ui.graphics.Color.Transparent) {
             Tab(mode == 0, { if (mode == 1) raw = linesToText(); mode = 0 }, text = { Text(stringResource(R.string.mode_text)) })
             Tab(mode == 1, { textToLines(); mode = 1 }, text = { Text(stringResource(R.string.mode_sync)) })
         }

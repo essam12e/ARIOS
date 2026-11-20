@@ -25,6 +25,10 @@ import com.arios.player.ui.AppNav
 import com.arios.player.ui.components.Artwork
 import com.arios.player.ui.components.displayArtist
 import com.arios.player.ui.library.ArchShape
+import com.arios.player.ui.theme.AriosColors
+import com.arios.player.ui.theme.bounceClick
+import com.arios.player.ui.theme.glass
+import com.arios.player.ui.theme.glowHalo
 import kotlinx.coroutines.delay
 
 @Composable
@@ -45,9 +49,10 @@ fun MiniPlayer(nav: AppNav, modifier: Modifier = Modifier) {
         modifier
             .fillMaxWidth()
             .padding(horizontal = 10.dp)
-            .clip(RoundedCornerShape(22.dp))
-            .background(palette.card)
-            .clickable { nav.playerOpen = true }
+            .background(androidx.compose.ui.graphics.lerp(palette.card, AriosColors.Black, 0.45f), RoundedCornerShape(24.dp))
+            .glass(RoundedCornerShape(24.dp), glow = palette.base, glowRadius = 20.dp, fill = 0.12f, tint = androidx.compose.ui.graphics.lerp(palette.base, Color.White, 0.3f))
+            .clip(RoundedCornerShape(24.dp))
+            .bounceClick { nav.playerOpen = true }
             .pointerInput(Unit) { detectVerticalDragGestures { _, d -> if (d < -12) nav.playerOpen = true } },
     ) {
         Row(Modifier.padding(8.dp), verticalAlignment = Alignment.CenterVertically) {
@@ -59,14 +64,14 @@ fun MiniPlayer(nav: AppNav, modifier: Modifier = Modifier) {
             }
             Ltr { Row(verticalAlignment = Alignment.CenterVertically) {
             IconButton(onClick = { Arios.player.previous() }) { Icon(Icons.Filled.SkipPrevious, stringResource(R.string.previous), tint = Color.White) }
-            Box(Modifier.size(46.dp).clip(CircleShape).background(Color.White).clickable { Arios.player.toggle() }, contentAlignment = Alignment.Center) {
+            Box(Modifier.size(46.dp).glowHalo(state.isPlaying).clip(CircleShape).background(AriosColors.brand).bounceClick { Arios.player.toggle() }, contentAlignment = Alignment.Center) {
                 Icon(if (state.isPlaying) Icons.Filled.Pause else Icons.Filled.PlayArrow, stringResource(R.string.play), tint = Color.Black)
             }
             IconButton(onClick = { Arios.player.next() }) { Icon(Icons.Filled.SkipNext, stringResource(R.string.next), tint = Color.White) }
             } }
         }
         Ltr { Box(Modifier.fillMaxWidth().padding(horizontal = 14.dp).padding(bottom = 6.dp).height(3.dp).clip(CircleShape).background(Color.White.copy(alpha = 0.2f))) {
-            Box(Modifier.fillMaxWidth(progress).fillMaxHeight().background(Color.White))
+            Box(Modifier.fillMaxWidth(progress).fillMaxHeight().background(AriosColors.brandHorizontal))
         } }
     }
 }

@@ -45,6 +45,11 @@ import com.arios.player.ui.AppNav
 import com.arios.player.ui.Screen
 import com.arios.player.ui.components.*
 import com.arios.player.ui.theme.AriosColors
+import com.arios.player.ui.theme.bounceClick
+import com.arios.player.ui.theme.glass
+import com.arios.player.ui.theme.glowHalo
+import com.arios.player.ui.theme.staggerIn
+import androidx.compose.ui.draw.shadow
 import kotlinx.coroutines.launch
 
 /** Arch shape: the ARIOS signature for album covers. */
@@ -75,10 +80,14 @@ fun LibraryScreen(nav: AppNav, hasPermission: Boolean, requestPermission: () -> 
         ) {
             tabs.forEachIndexed { i, t ->
                 val sel = i == tab
+                val selA by androidx.compose.animation.core.animateFloatAsState(if (sel) 1f else 0f, label = "tab")
                 Row(
-                    Modifier.clip(CircleShape)
-                        .background(if (sel) AriosColors.Silver else AriosColors.SurfaceHigh)
-                        .clickable { tab = i; Arios.prefs.libraryTab = i }
+                    Modifier.staggerIn(i, 45)
+                        .then(if (sel) Modifier.shadow(14.dp, CircleShape, ambientColor = AriosColors.Mint, spotColor = AriosColors.Mint) else Modifier)
+                        .glass(CircleShape, fill = 0.06f)
+                        .clip(CircleShape)
+                        .background(AriosColors.brandHorizontal, alpha = selA)
+                        .bounceClick { tab = i; Arios.prefs.libraryTab = i }
                         .padding(horizontal = 16.dp, vertical = 10.dp),
                     verticalAlignment = Alignment.CenterVertically,
                 ) {
@@ -120,10 +129,10 @@ typealias Dp = androidx.compose.ui.unit.Dp
 private fun LibraryHeader(nav: AppNav, lib: LibraryState, tab: Int, @Suppress("UNUSED_PARAMETER") v: Int) {
     var sortOpen by remember { mutableStateOf(false) }
     Row(Modifier.fillMaxWidth().padding(start = 20.dp, end = 12.dp, top = 12.dp, bottom = 4.dp), verticalAlignment = Alignment.CenterVertically) {
-        Image(painterResource(R.drawable.arios_logo), null, Modifier.size(44.dp).clip(RoundedCornerShape(12.dp)))
+        Image(painterResource(R.drawable.arios_logo), null, Modifier.size(46.dp).glowHalo(true, AriosColors.Mint.copy(alpha = 0.6f)))
         Spacer(Modifier.width(12.dp))
         Column(Modifier.weight(1f)) {
-            Text(stringResource(R.string.library), style = MaterialTheme.typography.headlineMedium)
+            Text(stringResource(R.string.library), style = MaterialTheme.typography.headlineMedium.copy(brush = AriosColors.brand))
             Text(stringResource(R.string.songs_count, lib.songs.size), style = MaterialTheme.typography.labelMedium, color = AriosColors.SilverDim)
         }
         if (tab == 2 || tab == 3) Box {
@@ -134,12 +143,11 @@ private fun LibraryHeader(nav: AppNav, lib: LibraryState, tab: Int, @Suppress("U
             Icon(if (Arios.prefs.albumGrid) Icons.Filled.ViewList else Icons.Filled.GridView, null)
         }
         Spacer(Modifier.width(4.dp))
-        FilledIconButton(
-            onClick = { Arios.player.playSongs(lib.songs, shuffle = true); nav.playerOpen = true },
-            shape = RoundedCornerShape(16.dp),
-            colors = IconButtonDefaults.filledIconButtonColors(containerColor = AriosColors.Silver, contentColor = AriosColors.Black),
-            modifier = Modifier.size(48.dp),
-        ) { Icon(Icons.Filled.Shuffle, stringResource(R.string.shuffle_all)) }
+        Box(
+            Modifier.size(48.dp).glowHalo(true).clip(RoundedCornerShape(16.dp)).background(AriosColors.brand)
+                .bounceClick { Arios.player.playSongs(lib.songs, shuffle = true); nav.playerOpen = true },
+            contentAlignment = Alignment.Center,
+        ) { Icon(Icons.Filled.Shuffle, stringResource(R.string.shuffle_all), tint = AriosColors.Black) }
     }
 }
 
@@ -210,9 +218,14 @@ fun PlayShuffleHeader(songs: List<Song>, nav: AppNav) {
             Icon(Icons.Filled.Shuffle, null, Modifier.size(18.dp)); Spacer(Modifier.width(6.dp)); Text(stringResource(R.string.shuffle))
         }
         Spacer(Modifier.width(8.dp))
-        Button(onClick = { Arios.player.playSongs(songs); nav.playerOpen = true },
-            colors = ButtonDefaults.buttonColors(containerColor = AriosColors.Silver, contentColor = AriosColors.Black)) {
-            Icon(Icons.Filled.PlayArrow, null, Modifier.size(18.dp)); Spacer(Modifier.width(6.dp)); Text(stringResource(R.string.play))
+        Row(
+            Modifier.shadow(12.dp, CircleShape, ambientColor = AriosColors.Mint, spotColor = AriosColors.Mint).clip(CircleShape)
+                .background(AriosColors.brandHorizontal).bounceClick { Arios.player.playSongs(songs); nav.playerOpen = true }
+                .padding(horizontal = 20.dp, vertical = 10.dp),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            Icon(Icons.Filled.PlayArrow, null, Modifier.size(18.dp), tint = AriosColors.Black); Spacer(Modifier.width(6.dp))
+            Text(stringResource(R.string.play), color = AriosColors.Black, fontWeight = FontWeight.SemiBold)
         }
     }
 }
@@ -224,7 +237,8 @@ fun SongList(nav: AppNav, songs: List<Song>, bottomPadding: Dp, showIndex: Boole
     IndexedList(songs, { it.title }, showIndex, bottomPadding, header = {
         Column { header?.invoke(); PlayShuffleHeader(songs, nav) }
     }) { i, s ->
-        SongRow(s, s.id == player.songId, unknown, onClick = { Arios.player.playSongs(songs, i) }, onMore = { nav.menuSong = s })
+        SongRow(s, s.id == player.songId, unknown, onClick = { Arios.player.playSongs(songs, i) }, onMore = { nav.menuSong = s },
+            index = i, playing = player.isPlaying)
     }
 }
 
@@ -265,7 +279,7 @@ private fun AlbumsTab(nav: AppNav, albums: List<Album>, bottomPadding: Dp, v: In
             contentPadding = PaddingValues(start = 12.dp, end = 12.dp, top = 8.dp, bottom = bottomPadding + 16.dp),
             horizontalArrangement = Arrangement.spacedBy(12.dp), verticalArrangement = Arrangement.spacedBy(12.dp),
         ) {
-            itemsIndexed(sorted, key = { _, a -> a.id }) { _, a -> AlbumCard(a, unknown, { nav.push(Screen.AlbumDetail(a.id)) }) { Arios.player.playSongs(a.songs) } }
+            itemsIndexed(sorted, key = { _, a -> a.id }) { i, a -> AlbumCard(i, a, unknown, { nav.push(Screen.AlbumDetail(a.id)) }) { Arios.player.playSongs(a.songs) } }
         }
         AlphabetBar(letters, Modifier.align(AbsoluteAlignment.CenterLeft).padding(start = 4.dp, top = 8.dp, bottom = bottomPadding + 8.dp).fillMaxHeight()) { l ->
             val idx = sorted.indexOfFirst { indexLetter(it.title) == l }
@@ -275,16 +289,16 @@ private fun AlbumsTab(nav: AppNav, albums: List<Album>, bottomPadding: Dp, v: In
 }
 
 @Composable
-private fun AlbumCard(a: Album, unknown: String, onClick: () -> Unit, onPlay: () -> Unit) {
+private fun AlbumCard(index: Int, a: Album, unknown: String, onClick: () -> Unit, onPlay: () -> Unit) {
     Column(
-        Modifier.clip(RoundedCornerShape(24.dp)).background(AriosColors.Surface).clickable(onClick = onClick).padding(12.dp)
+        Modifier.staggerIn(index, 50).glass(RoundedCornerShape(24.dp)).clip(RoundedCornerShape(24.dp)).bounceClick(onClick = onClick).padding(12.dp)
     ) {
         Box {
             Artwork(a.cover.artKey(), Modifier.fillMaxWidth().aspectRatio(1f), ArchShape, 40.dp)
-            FilledIconButton(
-                onClick = onPlay, modifier = Modifier.align(Alignment.TopEnd).size(38.dp),
-                colors = IconButtonDefaults.filledIconButtonColors(containerColor = AriosColors.Silver, contentColor = AriosColors.Black),
-            ) { Icon(Icons.Filled.PlayArrow, null, Modifier.size(22.dp)) }
+            Box(
+                Modifier.align(Alignment.TopEnd).size(38.dp).glowHalo(false).clip(CircleShape).background(AriosColors.brand).bounceClick(onClick = onPlay),
+                contentAlignment = Alignment.Center,
+            ) { Icon(Icons.Filled.PlayArrow, null, Modifier.size(22.dp), tint = AriosColors.Black) }
         }
         Spacer(Modifier.height(10.dp))
         Text(a.title, maxLines = 1, overflow = TextOverflow.Ellipsis, style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.SemiBold)
@@ -300,8 +314,8 @@ private fun AlbumCard(a: Album, unknown: String, onClick: () -> Unit, onPlay: ()
 @Composable
 fun ListRow(cover: Song?, title: String, subtitle: String, shape: androidx.compose.ui.graphics.Shape, icon: ImageVector? = null, onClick: () -> Unit) {
     Row(Modifier.fillMaxWidth().clickable(onClick = onClick).padding(horizontal = 16.dp, vertical = 8.dp), verticalAlignment = Alignment.CenterVertically) {
-        if (icon != null) Box(Modifier.size(54.dp).clip(shape).background(AriosColors.SurfaceHigh), contentAlignment = Alignment.Center) {
-            Icon(icon, null, tint = AriosColors.Silver)
+        if (icon != null) Box(Modifier.size(54.dp).glass(shape, fill = 0.08f), contentAlignment = Alignment.Center) {
+            Icon(icon, null, tint = AriosColors.Mint)
         } else Artwork(cover?.artKey(), Modifier.size(54.dp), shape, 22.dp)
         Spacer(Modifier.width(14.dp))
         Column(Modifier.weight(1f)) {

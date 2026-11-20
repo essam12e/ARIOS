@@ -41,6 +41,8 @@ import com.arios.player.artwork.artKey
 import com.arios.player.data.MediaScanner
 import com.arios.player.data.Song
 import com.arios.player.ui.theme.AriosColors
+import com.arios.player.ui.theme.EqualizerBars
+import com.arios.player.ui.theme.staggerIn
 
 @Composable
 fun Artwork(key: ArtKey?, modifier: Modifier = Modifier, shape: Shape = RoundedCornerShape(10.dp), iconSize: Dp = 28.dp) {
@@ -85,9 +87,11 @@ fun SongRow(
     leading: (@Composable () -> Unit)? = null,
     showArt: Boolean = true,
     trailingExtra: (@Composable () -> Unit)? = null,
+    index: Int = 99,
+    playing: Boolean = true,
 ) {
     Row(
-        Modifier.fillMaxWidth().clickable(onClick = onClick).padding(start = 16.dp, end = 4.dp, top = 7.dp, bottom = 7.dp),
+        Modifier.fillMaxWidth().staggerIn(index).clickable(onClick = onClick).padding(start = 16.dp, end = 4.dp, top = 7.dp, bottom = 7.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
         if (leading != null) leading()
@@ -96,7 +100,7 @@ fun SongRow(
         Column(Modifier.weight(1f)) {
             Row(verticalAlignment = Alignment.CenterVertically) {
                 if (isCurrent) {
-                    Icon(Icons.Filled.GraphicEq, null, tint = AriosColors.Mint, modifier = Modifier.size(16.dp))
+                    EqualizerBars(playing, Modifier.size(14.dp))
                     Spacer(Modifier.width(6.dp))
                 }
                 Text(
@@ -118,7 +122,7 @@ fun SongRow(
 
 @Composable
 fun Pill(text: String, modifier: Modifier = Modifier, color: Color = AriosColors.SurfaceHighest) {
-    Box(modifier.clip(CircleShape).background(color).padding(horizontal = 10.dp, vertical = 3.dp)) {
+    Box(modifier.clip(CircleShape).background(color.copy(alpha = 0.75f)).padding(horizontal = 10.dp, vertical = 3.dp)) {
         Text(text, style = MaterialTheme.typography.labelMedium, color = AriosColors.Silver)
     }
 }

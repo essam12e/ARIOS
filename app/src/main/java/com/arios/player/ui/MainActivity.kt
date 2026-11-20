@@ -64,7 +64,7 @@ class MainActivity : AppCompatActivity() {
         handleIntent(intent)
         setContent {
             AriosTheme {
-                androidx.compose.material3.Surface(color = androidx.compose.material3.MaterialTheme.colorScheme.background) {
+                androidx.compose.material3.Surface(color = androidx.compose.ui.graphics.Color.Transparent, contentColor = com.arios.player.ui.theme.AriosColors.TextPrimary) {
                     AppRoot(nav, hasPermission, ::requestPermissions)
                 }
             }

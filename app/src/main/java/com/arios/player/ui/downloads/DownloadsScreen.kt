@@ -47,7 +47,7 @@ fun DownloadsScreen(nav: AppNav, bottomPadding: androidx.compose.ui.unit.Dp) {
     val active = tasks.count { it.state == DlState.RUNNING || it.state == DlState.QUEUED }
     Column(Modifier.fillMaxSize().statusBarsPadding()) {
         Text(stringResource(R.string.downloads), Modifier.padding(start = 20.dp, top = 16.dp), style = MaterialTheme.typography.headlineMedium)
-        TabRow(nav.downloadsTab, containerColor = MaterialTheme.colorScheme.background, modifier = Modifier.padding(top = 8.dp)) {
+        TabRow(nav.downloadsTab, containerColor = androidx.compose.ui.graphics.Color.Transparent, modifier = Modifier.padding(top = 8.dp)) {
             Tab(nav.downloadsTab == 0, { nav.downloadsTab = 0 }, text = { Text(stringResource(R.string.discover)) }, icon = { Icon(Icons.Filled.TravelExplore, null) })
             Tab(nav.downloadsTab == 1, { nav.downloadsTab = 1 }, text = {
                 Text(stringResource(R.string.my_downloads) + if (active > 0) " ($active)" else "")

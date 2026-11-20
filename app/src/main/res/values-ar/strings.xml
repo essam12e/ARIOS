@@ -174,4 +174,9 @@
     <string name="word_by_word">تظليل كلمة بكلمة</string>
     <string name="word_by_word_hint">يستخدم توقيت الكلمات الدقيق إن وُجد وإلا يقدّره تلقائياً</string>
     <string name="widget_desc">تحكّم بآريوس من الشاشة الرئيسية</string>
+    <string name="no_match_hint">لا توجد نتيجة مطابقة. عدّل العنوان أو الفنان وأعد البحث، أو أضف الكلمات بنفسك.</string>
+    <string name="best_match">مطابقة</string>
+    <string name="show_weak_results">عرض %1$d نتيجة أقل تطابقاً</string>
+    <string name="use_lyrics">استخدام هذه الكلمات</string>
+    <string name="not_synced">غير متزامنة</string>
 </resources>

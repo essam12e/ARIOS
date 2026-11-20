@@ -80,7 +80,7 @@ class ScreenshotTest {
             val c = Canvas(bmp)
             c.drawRect(0f, 0f, 400f, 400f, Paint().apply { shader = LinearGradient(0f, 0f, 400f, 400f, a, b, Shader.TileMode.CLAMP) })
             c.drawCircle(260f, 150f, 90f, Paint().apply { color = 0x55FFFFFF })
-            FileOutputStream(Arios.artwork.cacheFile(s.albumId)).use { bmp.compress(Bitmap.CompressFormat.JPEG, 90, it) }
+            FileOutputStream(Arios.artwork.songFile(s.id)).use { bmp.compress(Bitmap.CompressFormat.JPEG, 90, it) }
         }
         runBlocking { Arios.lyrics.saveRaw(songs[4], arabicLrc, "LRCLIB") }
         Arios.userStore.toggleFavorite(songs[4].key).also { if (!Arios.userStore.isFavorite(songs[4].key)) Arios.userStore.toggleFavorite(songs[4].key) }
@@ -103,7 +103,7 @@ class ScreenshotTest {
     }
 
     @Test fun artworkFetcherResolvesCachedFile() {
-        val key = com.arios.player.artwork.ArtKey(10, songs[0].uri.toString(), "a", "b", "c")
+        val key = com.arios.player.artwork.ArtKey(10, songs[0].uri.toString(), "a", "b", "c", songs[0].id)
         val res = runBlocking { com.arios.player.artwork.ArtworkFetcher(key).fetch() }
         org.junit.Assert.assertTrue(res is coil.fetch.SourceResult)
     }

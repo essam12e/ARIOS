@@ -135,7 +135,7 @@ private fun DetailScaffold(
             cover.artKey(), Modifier.fillMaxWidth().height(360.dp).blur(60.dp).background(Color.Black), RoundedCornerShape(0.dp)
         )
         Box(Modifier.fillMaxWidth().height(361.dp).background(
-            Brush.verticalGradient(listOf(Color.Black.copy(alpha = 0.35f), MaterialTheme.colorScheme.background))
+            Brush.verticalGradient(listOf(Color.Black.copy(alpha = 0.25f), Color.Transparent))
         ))
         androidx.compose.foundation.lazy.LazyColumn(
             Modifier.fillMaxSize(), contentPadding = PaddingValues(bottom = bottomPadding + 16.dp),
@@ -149,7 +149,9 @@ private fun DetailScaffold(
                     }
                     if (icon != null && cover == null) Box(Modifier.size(200.dp).clip(shape).background(AriosColors.SurfaceHigh), contentAlignment = Alignment.Center) {
                         Icon(icon, null, Modifier.size(80.dp), tint = AriosColors.Silver)
-                    } else Artwork(cover?.artKey(), Modifier.size(220.dp), shape, 64.dp)
+                    } else com.arios.player.ui.theme.GlowBehind(Modifier.size(220.dp), AriosColors.Mint) {
+                        Artwork(cover?.artKey(), Modifier.fillMaxSize(), shape, 64.dp)
+                    }
                     Spacer(Modifier.height(16.dp))
                     Text(title, style = MaterialTheme.typography.headlineSmall, textAlign = TextAlign.Center, maxLines = 2,
                         overflow = TextOverflow.Ellipsis, modifier = Modifier.padding(horizontal = 24.dp))
@@ -163,7 +165,7 @@ private fun DetailScaffold(
             }
             itemsIndexed(songs) { i, s ->
                 SongRow(s, s.id == player.songId, unknown, onClick = { Arios.player.playSongs(songs, i) }, onMore = { nav.menuSong = s },
-                    trailingExtra = rowExtra?.let { { it(s) } })
+                    trailingExtra = rowExtra?.let { { it(s) } }, index = i, playing = player.isPlaying)
             }
         }
     }

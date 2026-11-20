@@ -1,6 +1,6 @@
 import Foundation
 
-struct LyricsCandidate: Identifiable {
+struct LyricsCandidate: Identifiable, @unchecked Sendable {
     let id = UUID()
     var sourceId: String
     var sourceName: String
@@ -9,10 +9,10 @@ struct LyricsCandidate: Identifiable {
     var album: String?
     var durationSec: Int?
     var syncedHint: Bool?
-    var load: () async -> Lyrics?
+    var load: @Sendable () async -> Lyrics?
 }
 
-protocol LyricsProvider {
+protocol LyricsProvider: Sendable {
     var id: String { get }
     var displayName: String { get }
     func search(_ q: LyricsQuery) async -> [LyricsCandidate]

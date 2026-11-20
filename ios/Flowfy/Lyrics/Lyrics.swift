@@ -1,12 +1,12 @@
 import Foundation
 
-struct LyricWord: Hashable {
+struct LyricWord: Hashable, Sendable {
     var start: Int64
     var end: Int64
     var text: String
 }
 
-struct LyricLine: Hashable {
+struct LyricLine: Hashable, Sendable {
     var start: Int64
     var end: Int64
     var text: String
@@ -15,7 +15,7 @@ struct LyricLine: Hashable {
     var realWordTiming: Bool = false
 }
 
-struct Lyrics: Hashable {
+struct Lyrics: Hashable, Sendable {
     var lines: [LyricLine]
     var synced: Bool
     var source: String

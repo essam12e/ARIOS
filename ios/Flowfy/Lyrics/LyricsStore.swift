@@ -204,7 +204,7 @@ final class LyricsStore: ObservableObject {
 }
 
 /// Runs `op`, returning nil if it takes longer than `seconds`.
-func withTimeout<T>(_ seconds: Double, _ op: @escaping () async -> T) async -> T? {
+func withTimeout<T: Sendable>(_ seconds: Double, _ op: @escaping @Sendable () async -> T) async -> T? {
     await withTaskGroup(of: T?.self) { g in
         g.addTask { await op() }
         g.addTask { try? await Task.sleep(nanoseconds: UInt64(seconds * 1_000_000_000)); return nil }

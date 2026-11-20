@@ -117,8 +117,8 @@ final class Player: ObservableObject {
         try? s.setCategory(.playback, mode: .default, policy: .longFormAudio)
         let nc = NotificationCenter.default
         nc.addObserver(forName: AVAudioSession.interruptionNotification, object: nil, queue: .main) { [weak self] n in
-            let type = (n.userInfo?[AVAudioSessionInterruptionTypeKey] as? UInt).flatMap(AVAudioSession.InterruptionType.init)
-            let opts = (n.userInfo?[AVAudioSessionInterruptionOptionKey] as? UInt).map(AVAudioSession.InterruptionOptions.init) ?? []
+            let type = (n.userInfo?[AVAudioSessionInterruptionTypeKey] as? UInt).flatMap { AVAudioSession.InterruptionType(rawValue: $0) }
+            let opts = (n.userInfo?[AVAudioSessionInterruptionOptionKey] as? UInt).map { AVAudioSession.InterruptionOptions(rawValue: $0) } ?? []
             Task { @MainActor in
                 guard let self else { return }
                 if type == .began { self.pausedPos = self.positionMs(); self.isPlaying = false; self.updateNowPlaying() }
@@ -126,7 +126,7 @@ final class Player: ObservableObject {
             }
         }
         nc.addObserver(forName: AVAudioSession.routeChangeNotification, object: nil, queue: .main) { [weak self] n in
-            let reason = (n.userInfo?[AVAudioSessionRouteChangeReasonKey] as? UInt).flatMap(AVAudioSession.RouteChangeReason.init)
+            let reason = (n.userInfo?[AVAudioSessionRouteChangeReasonKey] as? UInt).flatMap { AVAudioSession.RouteChangeReason(rawValue: $0) }
             Task { @MainActor in if reason == .oldDeviceUnavailable { self?.pause() } }
         }
         nc.addObserver(forName: UIApplication.willResignActiveNotification, object: nil, queue: .main) { [weak self] _ in
@@ -161,7 +161,7 @@ final class Player: ObservableObject {
             MPNowPlayingInfoPropertyPlaybackRate: isPlaying ? speed : 0,
             MPNowPlayingInfoPropertyDefaultPlaybackRate: 1.0,
         ]
-        if let (id, art) = artworkCache, id == s.id { info[MPMediaItemPropertyArtwork] = art }
+        if let c = artworkCache, c.0 == s.id { info[MPMediaItemPropertyArtwork] = c.1 }
         MPNowPlayingInfoCenter.default().nowPlayingInfo = info
         if artworkCache?.0 != s.id {
             Task {
@@ -301,7 +301,7 @@ final class Player: ObservableObject {
                 self.engine.connect(self.nodes[a], to: self.mixers[a], format: f.processingFormat)
                 self.formats[a] = f.processingFormat
             }
-            self.trackGain[a] = Prefs.shared.normalize ? await Loudness.gain(for: url, key: song.key) : 1
+            if Prefs.shared.normalize { self.trackGain[a] = await Loudness.gain(for: url, key: song.key) } else { self.trackGain[a] = 1 }
             guard g == self.generation else { return }
             var start = startMs ?? 0
             if startMs == nil, Prefs.shared.resumeLong, song.durationMs > 20 * 60_000 { start = Positions.shared.get(song.key) }
@@ -331,7 +331,7 @@ final class Player: ObservableObject {
         pausedPos = Int64(Double(startFrame) / sr * 1000)
         let count = AVAudioFrameCount(max(1, f.length - startFrame))
         node.scheduleSegment(f, startingFrame: startFrame, frameCount: count, at: nil, completionCallbackType: .dataPlayedBack) { [weak self] _ in
-            DispatchQueue.main.async {
+            Task { @MainActor in
                 guard let self, g == self.generation else { return }
                 self.trackEnded()
             }

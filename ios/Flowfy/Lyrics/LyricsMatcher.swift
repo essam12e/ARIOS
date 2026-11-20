@@ -1,6 +1,6 @@
 import Foundation
 
-struct LyricsQuery: Hashable {
+struct LyricsQuery: Hashable, Sendable {
     var title: String
     var artist: String
     var album: String?

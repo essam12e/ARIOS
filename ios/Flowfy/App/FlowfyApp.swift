@@ -20,9 +20,6 @@ final class AppDelegate: NSObject, UIApplicationDelegate {
         UIApplication.shared.beginReceivingRemoteControlEvents()
         return true
     }
-    func application(_ application: UIApplication, handleEventsForBackgroundURLSession identifier: String, completionHandler: @escaping () -> Void) {
-        Downloader.shared.backgroundCompletion = completionHandler
-    }
 }
 
 enum Route: Hashable {

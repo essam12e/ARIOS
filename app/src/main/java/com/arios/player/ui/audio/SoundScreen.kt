@@ -48,7 +48,7 @@ fun SoundScreen(nav: AppNav, bottomPadding: androidx.compose.ui.unit.Dp) {
     @Suppress("UNUSED_VARIABLE") val v by Arios.prefs.version.collectAsState()
     val arabic = LocalConfiguration.current.locales[0].language == "ar"
     val gains = remember(s, bands) {
-        if (s.bands.size == bands.size) s.bands else AudioFx.bandGains(s).ifEmpty { List(bands.size) { 0f } }
+        if (s.bands.size == bands.size) s.bands else AudioFx.bandGains(s, bands).ifEmpty { List(bands.size) { 0f } }
     }
 
     Column(Modifier.fillMaxSize().statusBarsPadding().verticalScroll(rememberScrollState()).padding(bottom = bottomPadding + 16.dp)) {

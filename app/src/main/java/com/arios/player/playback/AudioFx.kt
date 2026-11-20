@@ -81,8 +81,8 @@ object AudioFx {
     }
 
     /** dB per device band for [s] (custom bands or the preset curve). */
-    fun bandGains(s: EqSettings): List<Float> {
-        val info = _bands.value
+    fun bandGains(s: EqSettings, layout: List<EqBandInfo> = _bands.value): List<Float> {
+        val info = layout
         if (s.bands.size == info.size && info.isNotEmpty()) return s.bands
         val preset = presets.firstOrNull { it.id == s.presetId } ?: presets[0]
         return info.map { interpolate(preset.curve, it.centerHz) }

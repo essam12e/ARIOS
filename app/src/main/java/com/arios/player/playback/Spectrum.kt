@@ -135,6 +135,9 @@ object Spectrum : TeeAudioProcessor.AudioBufferSink {
         }
     }
 
+    /** Test hook: freeze a spectrum (used to render screenshots). */
+    internal fun setForTest(l: FloatArray, e: Float) { levels = l; energy = e; lastUpdate = Long.MAX_VALUE / 4 }
+
     /** Levels that decay to silence when nothing has been analysed recently (paused). */
     fun liveLevels(): FloatArray {
         val age = System.currentTimeMillis() - lastUpdate

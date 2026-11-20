@@ -156,6 +156,12 @@ class LyricsRepository(private val context: Context) {
         fileFor(song).delete(); missFor(song).delete(); memory.remove(song.key); noEmbedded.remove(song.key); _revision.value++
     }
 
+    fun renameKey(old: String, new: String) {
+        val a = File(dir, hash(old) + ".lrc"); val b = File(dir, hash(new) + ".lrc")
+        if (a.exists() && !b.exists()) a.renameTo(b)
+        memory.remove(old); _revision.value++
+    }
+
     fun allCachedFiles(): List<File> = dir.listFiles { f -> f.extension == "lrc" }?.toList() ?: emptyList()
     fun clearCache() { dir.listFiles()?.forEach { it.delete() }; memory.evictAll(); noEmbedded.clear(); _revision.value++ }
 

@@ -50,12 +50,22 @@ fun AppRoot(nav: AppNav, hasPermission: Boolean, requestPermission: () -> Unit) 
     }
     BackHandler(enabled = nav.stack.isNotEmpty() || nav.tab != Tab.LIBRARY) { nav.back() }
 
+    // live theme: accent / AMOLED / colours taken from the current cover
+    val prefsV by Arios.prefs.version.collectAsState()
+    val lib by Arios.library.state.collectAsState()
+    val coverPalette = if (Arios.prefs.dynamicColor) rememberArtPalette(player.songId?.let { lib.byId[it] }) else null
+    LaunchedEffect(prefsV, coverPalette?.base) {
+        val accent = coverPalette?.let { com.arios.player.ui.theme.AriosColors.fromColor(it.base) }
+            ?: com.arios.player.ui.theme.ACCENTS.getOrElse(Arios.prefs.accent) { com.arios.player.ui.theme.ACCENTS[0] }
+        com.arios.player.ui.theme.AriosColors.apply(accent, Arios.prefs.amoled)
+    }
+
     val miniVisible = player.hasMedia
     val bottomPadding = (if (miniVisible) 76.dp else 0.dp) + 84.dp
 
     // depth effect: the app recedes (scale + dim + rounded) while the player rises over it
     val depth by animateFloatAsState(
-        if (nav.playerOpen || nav.lyricsFull) 1f else 0f,
+        if (nav.playerOpen || nav.lyricsFull || nav.carMode || nav.wrapped) 1f else 0f,
         spring(dampingRatio = 0.9f, stiffness = 220f), label = "depth",
     )
     val rtl = androidx.compose.ui.platform.LocalLayoutDirection.current == androidx.compose.ui.unit.LayoutDirection.Rtl
@@ -88,6 +98,11 @@ fun AppRoot(nav: AppNav, hasPermission: Boolean, requestPermission: () -> Unit) 
                 Box(Modifier.fillMaxSize()) {
                     when (val target2 = t.screen) {
                         is Screen.LyricsEditor -> LyricsEditorScreen(nav, target2.songId, bottomPadding)
+                        is Screen.Sound -> com.arios.player.ui.audio.SoundScreen(nav, bottomPadding)
+                        is Screen.Stats -> com.arios.player.ui.stats.StatsScreen(nav, bottomPadding)
+                        is Screen.Duplicates -> com.arios.player.ui.library.DuplicatesScreen(nav, bottomPadding)
+                        is Screen.TagEditor -> com.arios.player.ui.library.TagEditorScreen(nav, target2.songId, bottomPadding)
+                        is Screen.ShareLyrics -> com.arios.player.ui.share.ShareLyricsScreen(nav, target2.songId, target2.line, bottomPadding)
                         is Screen -> DetailScreen(nav, target2, bottomPadding)
                         Tab.LIBRARY -> LibraryScreen(nav, hasPermission, requestPermission, bottomPadding)
                         Tab.SEARCH -> SearchScreen(nav, bottomPadding)
@@ -116,6 +131,8 @@ fun AppRoot(nav: AppNav, hasPermission: Boolean, requestPermission: () -> Unit) 
 
         AnimatedVisibility(nav.playerOpen, enter = Motion.playerEnter, exit = Motion.playerExit) { NowPlayingScreen(nav) }
         AnimatedVisibility(nav.lyricsFull, enter = Motion.lyricsEnter, exit = Motion.lyricsExit) { FullLyricsScreen(nav) }
+        AnimatedVisibility(nav.carMode, enter = Motion.lyricsEnter, exit = Motion.lyricsExit) { CarModeScreen(nav) }
+        AnimatedVisibility(nav.wrapped, enter = Motion.playerEnter, exit = Motion.playerExit) { com.arios.player.ui.stats.WrappedScreen(nav) }
 
         QueueSheet(nav)
         SongMenuSheet(nav)

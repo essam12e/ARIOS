@@ -94,6 +94,15 @@ class UserStore(context: Context) {
         save()
     }
 
+    /** A song's identity changed (tags edited): carry its favourite/playlist/offset over. */
+    fun renameKey(old: String, new: String) {
+        if (old == new) return
+        if (old in _favorites.value) _favorites.value = _favorites.value - old + new
+        _playlists.value = _playlists.value.map { p -> p.copy(songKeys = p.songKeys.map { if (it == old) new else it }) }
+        _offsets.value[old]?.let { _offsets.value = _offsets.value - old + (new to it) }
+        save()
+    }
+
     // ---- lyric offsets (ms, positive = lyrics later)
     fun offset(key: String): Long = _offsets.value[key] ?: 0L
     fun setOffset(key: String, ms: Long) {

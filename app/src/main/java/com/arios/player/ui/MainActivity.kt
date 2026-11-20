@@ -55,6 +55,9 @@ class MainActivity : AppCompatActivity() {
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
+        com.arios.player.ui.theme.AriosColors.apply(
+            com.arios.player.ui.theme.ACCENTS.getOrElse(Arios.prefs.accent) { com.arios.player.ui.theme.ACCENTS[0] }, Arios.prefs.amoled,
+        )
         enableEdgeToEdge()
         super.onCreate(savedInstanceState)
         hasPermission = granted()
@@ -79,6 +82,7 @@ class MainActivity : AppCompatActivity() {
     private fun handleIntent(intent: Intent?) {
         if (intent == null) return
         if (intent.getBooleanExtra(EXTRA_OPEN_PLAYER, false)) nav.playerOpen = true
+        if (intent.getBooleanExtra(EXTRA_OPEN_LYRICS, false)) nav.lyricsFull = true
         if (intent.getBooleanExtra(EXTRA_OPEN_DOWNLOADS, false)) { nav.selectTab(Tab.DOWNLOADS); nav.downloadsTab = 1 }
         if (intent.action == Intent.ACTION_VIEW && intent.data != null) {
             val uri = intent.data!!
@@ -103,5 +107,6 @@ class MainActivity : AppCompatActivity() {
     companion object {
         const val EXTRA_OPEN_PLAYER = "open_player"
         const val EXTRA_OPEN_DOWNLOADS = "open_downloads"
+        const val EXTRA_OPEN_LYRICS = "open_lyrics"
     }
 }

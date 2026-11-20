@@ -16,6 +16,7 @@ object BackupManager {
             root.put("app", "ARIOS"); root.put("version", 1); root.put("created", System.currentTimeMillis())
             root.put("user", Arios.userStore.toJson())
             root.put("settings", JSONObject(Arios.prefs.exportMap()))
+            root.put("history", Arios.history.toJson())
             val lyrics = JSONArray()
             Arios.lyrics.allCachedFiles().forEach { f ->
                 val text = f.readText()
@@ -33,6 +34,7 @@ object BackupManager {
             val root = JSONObject(text)
             require(root.optString("app") == "ARIOS")
             root.optJSONObject("user")?.let { Arios.userStore.replaceAll(it) }
+            root.optJSONArray("history")?.let { Arios.history.fromJson(it) }
             root.optJSONObject("settings")?.let { s ->
                 val map = HashMap<String, Any?>()
                 s.keys().forEach { k -> map[k] = s.get(k) }

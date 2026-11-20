@@ -136,6 +136,7 @@ private fun LibraryHeader(nav: AppNav, lib: LibraryState, tab: Int, @Suppress("U
             Text(stringResource(R.string.library), style = MaterialTheme.typography.headlineMedium.copy(brush = AriosColors.brand))
             Text(stringResource(R.string.songs_count, lib.songs.size), style = MaterialTheme.typography.labelMedium, color = AriosColors.SilverDim)
         }
+        FilledTonalIconButton(onClick = { nav.push(Screen.Stats) }) { Icon(Icons.Filled.Insights, stringResource(R.string.stats)) }
         if (tab == 2 || tab == 3) Box {
             FilledTonalIconButton(onClick = { sortOpen = true }) { Icon(Icons.AutoMirrored.Filled.Sort, stringResource(R.string.sort)) }
             SortMenu(sortOpen, tab == 2) { sortOpen = false }
@@ -307,7 +308,7 @@ private fun AlbumCard(index: Int, a: Album, unknown: String, onClick: () -> Unit
         Spacer(Modifier.height(6.dp))
         Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
             Pill("♪ ${a.songs.size}")
-            if (a.year > 0) Pill("${a.year}", color = Color(0xFF2B2F36))
+            if (a.year > 0) Pill("${a.year}", color = AriosColors.SurfaceHigh)
         }
     }
 }
@@ -355,6 +356,24 @@ private fun PlaylistsTab(nav: AppNav, lib: LibraryState, bottomPadding: Dp) {
     val ctx = androidx.compose.ui.platform.LocalContext.current
     val downloadedCount = lib.songs.count { it.folder.endsWith("/ARIOS") || it.path.contains("/Music/ARIOS/") }
     LazyColumn(Modifier.fillMaxSize(), contentPadding = PaddingValues(bottom = bottomPadding + 16.dp)) {
+        item {
+            Text(stringResource(R.string.smart_playlists), Modifier.padding(start = 20.dp, top = 8.dp), style = MaterialTheme.typography.titleSmall, color = AriosColors.Mint)
+            Row(Modifier.horizontalScroll(rememberScrollState()).padding(horizontal = 16.dp, vertical = 10.dp), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                com.arios.player.data.SmartList.entries.forEachIndexed { i, l ->
+                    val (title, icon) = smartInfo(l)
+                    Column(
+                        Modifier.width(128.dp).staggerIn(i, 60).glass(RoundedCornerShape(22.dp), fill = 0.06f).clip(RoundedCornerShape(22.dp))
+                            .bounceClick { nav.push(Screen.Smart(l)) }.padding(14.dp),
+                    ) {
+                        Box(Modifier.size(44.dp).clip(RoundedCornerShape(14.dp)).background(AriosColors.brand), contentAlignment = Alignment.Center) {
+                            Icon(icon, null, tint = AriosColors.Black)
+                        }
+                        Spacer(Modifier.height(10.dp))
+                        Text(stringResource(title), style = MaterialTheme.typography.labelLarge, fontWeight = FontWeight.SemiBold, maxLines = 2)
+                    }
+                }
+            }
+        }
         item {
             ListRow(null, stringResource(R.string.new_playlist), stringResource(R.string.new_playlist_hint), RoundedCornerShape(14.dp), Icons.Filled.Add) { create = true }
         }

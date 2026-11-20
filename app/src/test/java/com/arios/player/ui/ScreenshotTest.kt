@@ -153,4 +153,77 @@ class ScreenshotTest {
         val nav = AppNav().apply { lyricsFull = true }
         frames("glide", nav, 80, 12, before = { Arios.player.testPosition = 20_900L + it * 80 }) {}
     }
+
+    private fun seedHistory() {
+        val now = System.currentTimeMillis()
+        val r = java.util.Random(7)
+        for (d in 0 until 30) for (k in 0 until 3 + r.nextInt(6)) {
+            val s = songs[(r.nextInt(songs.size) + if (d % 3 == 0) 0 else 4) % songs.size]
+            val t = now - d * 86_400_000L - (r.nextInt(14) + 8) * 3_600_000L
+            Arios.history.add(com.arios.player.data.PlayEvent(s.key, t, s.durationMs, s.artist, s.title))
+        }
+    }
+
+    @Test fun sound() {
+        playing(songs[4], 17_200)
+        shoot("5_sound", AppNav().apply { stack += Screen.Sound })
+    }
+
+    @Test fun stats() {
+        seedHistory(); playing(songs[4], 17_200)
+        shoot("6_stats", AppNav().apply { stack += Screen.Stats })
+    }
+
+    @Test fun shareLyrics() {
+        playing(songs[4], 17_200)
+        shoot("7_share", AppNav().apply { stack += Screen.ShareLyrics(songs[4].id, 1) })
+    }
+
+    @Test fun playlistsSmart() {
+        seedHistory(); playing(songs[4], 17_200)
+        Arios.prefs.libraryTab = 4
+        shoot("8_playlists", AppNav())
+    }
+
+    @Test fun settingsLook() {
+        playing(songs[4], 17_200)
+        shoot("9_settings", AppNav().apply { selectTab(Tab.SETTINGS) })
+    }
+
+    @Test fun carMode() {
+        playing(songs[4], 17_200)
+        shoot("10_car", AppNav().apply { carMode = true })
+    }
+
+    @Test fun wrapped() {
+        seedHistory(); playing(songs[4], 17_200)
+        shoot("11_wrapped", AppNav().apply { wrapped = true })
+    }
+
+    @Test fun royalTheme() {
+        Arios.prefs.accent = 1
+        playing(songs[0], 60_000)
+        Arios.prefs.libraryTab = 2
+        shoot("12_royal", AppNav())
+        Arios.prefs.accent = 0
+    }
+
+    @Test fun lyricCards() {
+        val ctx = androidx.test.core.app.ApplicationProvider.getApplicationContext<android.content.Context>()
+        val l = runBlocking { Arios.lyrics.getLocal(songs[4]) }!!
+        val art = android.graphics.BitmapFactory.decodeFile(Arios.artwork.songFile(songs[4].id).path)
+        val r = com.arios.player.share.LyricCardRenderer(ctx)
+        com.arios.player.share.CardStyle.entries.forEachIndexed { i, st ->
+            val spec = com.arios.player.share.CardSpec(st, if (i % 2 == 0) com.arios.player.share.CardAspect.STORY else com.arios.player.share.CardAspect.SQUARE,
+                l.lines.subList(1, 3), songs[4].title, songs[4].artist, art, 0xFF2EE6A0.toInt(), 0xFFB8FFE0.toInt(), 0xFF5A2A12.toInt())
+            java.io.File("build/screens").mkdirs()
+            java.io.FileOutputStream("build/screens/card_$i.png").use { r.render(spec, 0.5f).compress(Bitmap.CompressFormat.PNG, 100, it) }
+            // a karaoke video frame
+            if (i == 0) {
+                val b = Bitmap.createBitmap(540, 960, Bitmap.Config.ARGB_8888)
+                r.draw(Canvas(b), spec, 540, 960, 16_300L, 0.4f)
+                java.io.FileOutputStream("build/screens/card_frame.png").use { b.compress(Bitmap.CompressFormat.PNG, 100, it) }
+            }
+        }
+    }
 }

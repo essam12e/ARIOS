@@ -17,6 +17,8 @@ import androidx.compose.ui.composed
 import androidx.compose.ui.draw.blur
 import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.draw.shadow
+import androidx.compose.ui.graphics.drawscope.translate
+import androidx.compose.ui.graphics.drawOutline
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
@@ -35,15 +37,16 @@ import kotlin.math.sin
  */
 @Composable
 fun AuroraBackground(modifier: Modifier = Modifier, tint: Color? = null, intensity: Float = 1f) {
+    val level = if (AriosColors.amoled) intensity * 0.45f else intensity
     val t = rememberInfiniteTransition(label = "aurora")
     val phase by t.animateFloat(0f, (2 * Math.PI).toFloat(), infiniteRepeatable(tween(22000, easing = LinearEasing)), label = "ph")
     val c1 = tint?.let { lerp(it, AriosColors.Mint, 0.25f) } ?: AriosColors.Mint
     val c2 = tint?.let { lerp(it, AriosColors.Emerald, 0.5f) } ?: AriosColors.Emerald
     val c3 = AriosColors.Teal
     Canvas(modifier.fillMaxSize()) {
-        drawRect(Brush.verticalGradient(listOf(Color(0xFF052017), AriosColors.Background, AriosColors.Black)))
+        drawRect(Brush.verticalGradient(listOf(lerp(AriosColors.Emerald, Color.Black, if (AriosColors.amoled) 0.93f else 0.84f), AriosColors.Background, AriosColors.Black)))
         fun blob(c: Color, cx: Float, cy: Float, r: Float, a: Float) = drawCircle(
-            Brush.radialGradient(listOf(c.copy(alpha = a * intensity), Color.Transparent), center = Offset(cx, cy), radius = r),
+            Brush.radialGradient(listOf(c.copy(alpha = a * level), Color.Transparent), center = Offset(cx, cy), radius = r),
             radius = r, center = Offset(cx, cy),
         )
         val w = size.width; val h = size.height
@@ -61,11 +64,7 @@ fun Modifier.glass(
     fill: Float = 0.07f,
     tint: Color = Color.White,
 ): Modifier = this
-    .then(
-        if (glow != null && Build.VERSION.SDK_INT >= 28)
-            Modifier.shadow(glowRadius, shape, clip = false, ambientColor = glow, spotColor = glow)
-        else Modifier
-    )
+    .then(if (glow != null) Modifier.softGlow(shape, glow, glowRadius) else Modifier)
     .background(Brush.verticalGradient(listOf(tint.copy(alpha = fill + 0.04f), tint.copy(alpha = fill * 0.5f))), shape)
     .border(
         1.dp,
@@ -138,5 +137,23 @@ fun GlowBehind(modifier: Modifier, color: Color, content: @Composable () -> Unit
                 .blur(48.dp).background(color.copy(alpha = 0.55f), RoundedCornerShape(28.dp))
         )
         content()
+    }
+}
+
+/**
+ * Soft outer glow drawn as stacked, fading outlines of [shape] – no shadow/offscreen layer,
+ * so content inside never gets darkened boxes.
+ */
+fun Modifier.softGlow(shape: Shape, color: Color, radius: Dp): Modifier = drawBehind {
+    val steps = 6
+    val r = radius.toPx()
+    for (i in steps downTo 1) {
+        val grow = r * i / steps
+        val outline = shape.createOutline(
+            androidx.compose.ui.geometry.Size(size.width + grow * 2, size.height + grow * 2), layoutDirection, this,
+        )
+        translate(-grow, -grow + r * 0.15f) {
+            drawOutline(outline, color.copy(alpha = color.alpha * 0.07f * (1f - (i - 1f) / steps)))
+        }
     }
 }

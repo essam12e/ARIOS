@@ -41,7 +41,7 @@ import kotlinx.coroutines.delay
 /** Colours extracted from the album art (Spotify-like dynamic background). */
 data class ArtPalette(val base: Color, val background: Color, val card: Color)
 
-private val defaultPalette = ArtPalette(Color(0xFF0F7A50), Color(0xFF062418), Color(0xFF0B3324))
+private val defaultPalette get() = ArtPalette(AriosColors.Emerald, lerp(AriosColors.Emerald, Color.Black, 0.8f), lerp(AriosColors.Emerald, Color.Black, 0.7f))
 
 @Composable
 fun rememberArtPalette(song: Song?): ArtPalette {
@@ -177,11 +177,12 @@ fun SleepDialog(onDismiss: () -> Unit) {
         title = { Text(stringResource(R.string.sleep_timer)) },
         text = {
             Column {
+                Text(stringResource(R.string.sleep_end_of_song), Modifier.fillMaxWidth().clickable { Arios.player.setSleepEndOfTrack(true); onDismiss() }.padding(12.dp), color = AriosColors.Mint)
                 listOf(5, 10, 15, 30, 45, 60, 90).forEach { m ->
                     Text(stringResource(R.string.minutes_n, m), Modifier.fillMaxWidth().clickable { Arios.player.setSleepTimer(m); onDismiss() }.padding(12.dp))
                 }
-                if (Arios.player.state.value.sleepEndsAt > 0)
-                    Text(stringResource(R.string.cancel_timer), Modifier.fillMaxWidth().clickable { Arios.player.setSleepTimer(0); onDismiss() }.padding(12.dp), color = AriosColors.Mint)
+                if (Arios.player.state.value.sleepEndsAt > 0 || Arios.player.state.value.sleepEndOfTrack)
+                    Text(stringResource(R.string.cancel_timer), Modifier.fillMaxWidth().clickable { Arios.player.setSleepTimer(0); Arios.player.setSleepEndOfTrack(false); onDismiss() }.padding(12.dp), color = Color(0xFFFF8A8A))
             }
         },
         confirmButton = { TextButton(onClick = onDismiss) { Text(stringResource(R.string.close)) } },

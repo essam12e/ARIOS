@@ -13,6 +13,21 @@ import java.nio.charset.Charset
  * MP3 (ID3v2 USLT / SYLT), FLAC & OGG/Opus (Vorbis LYRICS comment) and M4A/MP4 (©lyr).
  */
 object EmbeddedLyrics {
+    /** REPLAYGAIN_TRACK_GAIN found by the last parse (dB), see [replayGain]. */
+    private val lastGain = ThreadLocal<Float?>()
+
+    /** ReplayGain track gain stored in the file's tags, in dB (null if absent). */
+    fun replayGain(context: Context, uri: Uri): Float? {
+        lastGain.set(null)
+        read(context, uri)
+        return lastGain.get()
+    }
+
+    private fun noteGain(key: String, value: String) {
+        if (key.equals("REPLAYGAIN_TRACK_GAIN", true) && lastGain.get() == null)
+            lastGain.set(value.replace("dB", "", true).trim().replace(',', '.').toFloatOrNull())
+    }
+
     fun read(context: Context, uri: Uri): String? = runCatching {
         context.contentResolver.openFileDescriptor(uri, "r")?.use { pfd ->
             FileInputStream(pfd.fileDescriptor).channel.use { ch -> readChannel(ch) }
@@ -81,6 +96,14 @@ object EmbeddedLyrics {
             val end = (start + fsize).coerceAtMost(tag.size)
             if (fsize <= 0 || start >= tag.size) break
             when (id) {
+                "TXXX" -> if (end - start > 2) {
+                    val enc = tag[start].toInt()
+                    val descEnd = skipTerminated(tag, start + 1, end, enc)
+                    val termLen = if (enc == 1 || enc == 2) 2 else 1
+                    val desc = String(tag, start + 1, (descEnd - termLen - start - 1).coerceAtLeast(0), charset(enc)).trim('\uFEFF', '\u0000')
+                    val value = String(tag, descEnd, (end - descEnd).coerceAtLeast(0), charset(enc)).trim('\uFEFF', '\u0000', ' ')
+                    noteGain(desc, value)
+                }
                 "USLT" -> if (unsynced == null && end - start > 5) {
                     val enc = tag[start].toInt()
                     val textStart = skipTerminated(tag, start + 4, end, enc)
@@ -131,17 +154,19 @@ object EmbeddedLyrics {
         if (p + 4 > b.size) return null
         val n = bb.getInt(p); p += 4
         var plain: String? = null
+        var synced: String? = null
         repeat(n) {
-            if (p + 4 > b.size) return plain
+            if (p + 4 > b.size) return synced ?: plain
             val len = bb.getInt(p); p += 4
-            if (len < 0 || p + len > b.size) return plain
+            if (len < 0 || p + len > b.size) return synced ?: plain
             val kv = String(b, p, len, Charsets.UTF_8); p += len
             val key = kv.substringBefore('=').uppercase()
             val v = kv.substringAfter('=')
-            if (key == "SYNCEDLYRICS" || (key in setOf("LYRICS", "UNSYNCEDLYRICS") && LrcParser.looksSynced(v))) return v
+            noteGain(key, v)
+            if (key == "SYNCEDLYRICS" || (key in setOf("LYRICS", "UNSYNCEDLYRICS") && LrcParser.looksSynced(v))) synced = synced ?: v
             if (key in setOf("LYRICS", "UNSYNCEDLYRICS", "UNSYNCED LYRICS") && plain == null) plain = v
         }
-        return plain
+        return synced ?: plain
     }
 
     private fun flac(ch: FileChannel): String? {

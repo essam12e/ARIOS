@@ -16,6 +16,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
@@ -45,7 +46,10 @@ fun FullLyricsScreen(nav: AppNav) {
     BackHandler { nav.lyricsFull = false }
 
     Box(Modifier.fillMaxSize().background(AriosColors.Black).clickable(enabled = false) {}) {
-        com.arios.player.ui.theme.AuroraBackground(tint = palette.base, intensity = 1.6f)
+        com.arios.player.ui.theme.CoverBackdrop(song, dim = 0.5f)
+        com.arios.player.ui.theme.AuroraBackground(tint = palette.base, intensity = 0.7f, modifier = Modifier.graphicsLayer { alpha = 0.6f })
+        com.arios.player.ui.theme.VisualizerBars(Modifier.align(Alignment.BottomCenter).fillMaxWidth().height(140.dp).graphicsLayer { alpha = 0.35f },
+            mirrored = false)
         Column(Modifier.fillMaxSize().systemBarsPadding()) {
             Row(Modifier.fillMaxWidth().padding(8.dp), verticalAlignment = Alignment.CenterVertically) {
                 IconButton(onClick = { nav.lyricsFull = false }) { Icon(Icons.Filled.KeyboardArrowDown, stringResource(R.string.close), Modifier.size(30.dp), tint = Color.White) }
@@ -59,6 +63,13 @@ fun FullLyricsScreen(nav: AppNav) {
                 if (ready?.lyrics?.hasTranslation == true) IconButton(onClick = { Arios.prefs.showTranslation = !Arios.prefs.showTranslation }) {
                     Icon(Icons.Filled.Translate, stringResource(R.string.translation), tint = if (Arios.prefs.showTranslation) AriosColors.Mint else Color.White)
                 }
+                IconButton(onClick = {
+                    song?.let { s ->
+                        val l = (ls as? LyricsState.Ready)?.lyrics
+                        nav.lyricsFull = false
+                        nav.push(Screen.ShareLyrics(s.id, l?.indexAt(Arios.player.position() - offset) ?: -1))
+                    }
+                }) { Icon(Icons.Filled.IosShare, stringResource(R.string.share_lyrics), tint = Color.White) }
                 IconButton(onClick = { syncPanel = !syncPanel }) { Icon(Icons.Filled.Timer, stringResource(R.string.sync_offset), tint = if (offset != 0L) AriosColors.Mint else Color.White) }
                 Box {
                     IconButton(onClick = { menu = true }) { Icon(Icons.Filled.MoreVert, null, tint = Color.White) }

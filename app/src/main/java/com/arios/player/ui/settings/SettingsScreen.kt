@@ -31,6 +31,10 @@ import com.arios.player.download.MediaSaver
 import com.arios.player.lyrics.ALL_PROVIDERS
 import com.arios.player.ui.AppNav
 import com.arios.player.ui.theme.AriosColors
+import com.arios.player.ui.theme.bounceClick
+import com.arios.player.ui.theme.glowHalo
+import androidx.compose.foundation.background
+import androidx.compose.foundation.horizontalScroll
 import kotlinx.coroutines.launch
 
 @Composable
@@ -40,6 +44,7 @@ fun SettingsScreen(nav: AppNav, bottomPadding: androidx.compose.ui.unit.Dp) {
     @Suppress("UNUSED_VARIABLE") val v by Arios.prefs.version.collectAsState()
     val p = Arios.prefs
     var langDialog by remember { mutableStateOf(false) }
+    var excludeDialog by remember { mutableStateOf(false) }
     var importing by remember { mutableStateOf(false) }
 
     val exportLauncher = rememberLauncherForActivityResult(ActivityResultContracts.CreateDocument("application/json")) { uri: Uri? ->
@@ -73,6 +78,15 @@ fun SettingsScreen(nav: AppNav, bottomPadding: androidx.compose.ui.unit.Dp) {
     Column(Modifier.fillMaxSize().statusBarsPadding().verticalScroll(rememberScrollState()).padding(bottom = bottomPadding + 16.dp)) {
         Text(stringResource(R.string.settings), Modifier.padding(start = 20.dp, top = 16.dp, bottom = 8.dp), style = MaterialTheme.typography.headlineMedium)
 
+        Section(stringResource(R.string.appearance))
+        AccentPicker()
+        Switch(Icons.Filled.DarkMode, stringResource(R.string.amoled), stringResource(R.string.amoled_hint), p.amoled) { p.amoled = it }
+        Switch(Icons.Filled.Palette, stringResource(R.string.dynamic_color), stringResource(R.string.dynamic_color_hint), p.dynamicColor) { p.dynamicColor = it }
+        Switch(Icons.Filled.GraphicEq, stringResource(R.string.visualizer), stringResource(R.string.visualizer_hint), p.visualizer) { p.visualizer = it }
+
+        Section(stringResource(R.string.sound))
+        Item(Icons.Filled.Equalizer, stringResource(R.string.sound_settings), stringResource(R.string.sound_settings_hint)) { nav.push(com.arios.player.ui.Screen.Sound) }
+
         Section(stringResource(R.string.general))
         Item(Icons.Filled.Language, stringResource(R.string.language), currentLanguage(context)) { langDialog = true }
         Item(Icons.Filled.Refresh, stringResource(R.string.rescan), stringResource(R.string.rescan_hint)) {
@@ -85,6 +99,11 @@ fun SettingsScreen(nav: AppNav, bottomPadding: androidx.compose.ui.unit.Dp) {
         SliderItem(Icons.Filled.Timelapse, stringResource(R.string.min_duration), "${p.minDurationSec}s", p.minDurationSec.toFloat(), 0f..60f) {
             p.minDurationSec = it.toInt()
         }
+
+        Item(Icons.Filled.FolderOff, stringResource(R.string.exclude_folders), stringResource(R.string.exclude_folders_hint, p.excludedFolders.size)) { excludeDialog = true }
+        Item(Icons.Filled.ContentCopy, stringResource(R.string.duplicates), stringResource(R.string.duplicates_settings_hint)) { nav.push(com.arios.player.ui.Screen.Duplicates) }
+        Item(Icons.Filled.Insights, stringResource(R.string.stats), stringResource(R.string.stats_settings_hint)) { nav.push(com.arios.player.ui.Screen.Stats) }
+        Item(Icons.Filled.HistoryToggleOff, stringResource(R.string.clear_history), null) { Arios.history.clear(); nav.snack = context.getString(R.string.done) }
 
         Section(stringResource(R.string.lyrics))
         Switch(Icons.Filled.CloudDownload, stringResource(R.string.auto_lyrics), stringResource(R.string.auto_lyrics_hint), p.autoFetchLyrics) { p.autoFetchLyrics = it }
@@ -128,6 +147,7 @@ fun SettingsScreen(nav: AppNav, bottomPadding: androidx.compose.ui.unit.Dp) {
         }
     }
 
+    if (excludeDialog) ExcludeDialog { excludeDialog = false }
     if (langDialog) AlertDialog(
         onDismissRequest = { langDialog = false },
         title = { Text(stringResource(R.string.language)) },
@@ -206,4 +226,54 @@ private fun SliderItem(icon: ImageVector, title: String, value: String, current:
         }
         Slider(v, { v = it }, valueRange = range, onValueChangeFinished = { onDone(v) }, modifier = Modifier.padding(start = 40.dp))
     }
+}
+
+@Composable
+private fun AccentPicker() {
+    val p = Arios.prefs
+    val arabic = androidx.compose.ui.platform.LocalConfiguration.current.locales[0].language == "ar"
+    Row(Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()).padding(horizontal = 16.dp, vertical = 8.dp), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+        com.arios.player.ui.theme.ACCENTS.forEach { a ->
+            val sel = p.accent == a.id && !p.dynamicColor
+            Column(horizontalAlignment = Alignment.CenterHorizontally, modifier = Modifier.width(76.dp)) {
+                Box(
+                    Modifier.size(58.dp)
+                        .then(if (sel) Modifier.glowHalo(true, a.main) else Modifier)
+                        .clip(androidx.compose.foundation.shape.CircleShape)
+                        .background(androidx.compose.ui.graphics.Brush.linearGradient(listOf(a.light, a.main, a.deep)))
+                        .bounceClick { p.accent = a.id; p.dynamicColor = false },
+                    contentAlignment = Alignment.Center,
+                ) { if (sel) Icon(Icons.Filled.Check, null, tint = androidx.compose.ui.graphics.Color.Black) }
+                Spacer(Modifier.height(6.dp))
+                Text(if (arabic) a.nameAr else a.nameEn, style = MaterialTheme.typography.labelSmall, maxLines = 1, color = if (sel) AriosColors.Mint else AriosColors.SilverDim)
+            }
+        }
+    }
+}
+
+@Composable
+private fun ExcludeDialog(onDismiss: () -> Unit) {
+    val folders = remember { Arios.library.raw.map { it.folder }.distinct().sorted() }
+    val excluded = remember { mutableStateListOf(*Arios.prefs.excludedFolders.toTypedArray()) }
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text(stringResource(R.string.exclude_folders)) },
+        text = {
+            androidx.compose.foundation.lazy.LazyColumn(Modifier.heightIn(max = 420.dp)) {
+                items(folders.size) { i ->
+                    val f = folders[i]
+                    val off = f in excluded
+                    Row(Modifier.fillMaxWidth().clickable { if (off) excluded.remove(f) else excluded.add(f) }.padding(vertical = 6.dp), verticalAlignment = Alignment.CenterVertically) {
+                        Checkbox(!off, { if (off) excluded.remove(f) else excluded.add(f) })
+                        Column {
+                            Text(f.substringAfterLast('/'), style = MaterialTheme.typography.bodyLarge)
+                            Text(f.removePrefix("/storage/emulated/0"), style = MaterialTheme.typography.labelSmall, color = AriosColors.SilverDim, maxLines = 1)
+                        }
+                    }
+                }
+            }
+        },
+        confirmButton = { TextButton(onClick = { Arios.prefs.excludedFolders = excluded.toSet(); Arios.library.rebuild(); onDismiss() }) { Text(stringResource(R.string.save)) } },
+        dismissButton = { TextButton(onClick = onDismiss) { Text(stringResource(R.string.cancel)) } },
+    )
 }

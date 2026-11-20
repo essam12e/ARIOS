@@ -100,7 +100,13 @@ fun DetailScreen(nav: AppNav, screen: Screen, bottomPadding: Dp) {
                 dismissButton = { TextButton(onClick = { confirmDelete = false }) { Text(stringResource(R.string.cancel)) } },
             )
         }
-        is Screen.LyricsEditor -> Unit
+        is Screen.Smart -> {
+            val events by Arios.history.events.collectAsState()
+            val songs = remember(lib, events, screen.list) { com.arios.player.data.Insights.smart(screen.list, lib) }
+            val (title, icon) = smartInfo(screen.list)
+            DetailScaffold(nav, stringResource(title), stringResource(R.string.songs_count, songs.size), songs.firstOrNull(), RoundedCornerShape(24.dp), songs, bottomPadding, icon = icon)
+        }
+        else -> Unit
     }
 }
 
@@ -169,4 +175,13 @@ private fun DetailScaffold(
             }
         }
     }
+}
+
+fun smartInfo(l: com.arios.player.data.SmartList): Pair<Int, androidx.compose.ui.graphics.vector.ImageVector> = when (l) {
+    com.arios.player.data.SmartList.TOP -> R.string.smart_top to Icons.Filled.Whatshot
+    com.arios.player.data.SmartList.RECENT_PLAYED -> R.string.smart_recent_played to Icons.Filled.History
+    com.arios.player.data.SmartList.RECENT_ADDED -> R.string.smart_recent_added to Icons.Filled.NewReleases
+    com.arios.player.data.SmartList.FORGOTTEN -> R.string.smart_forgotten to Icons.Filled.Restore
+    com.arios.player.data.SmartList.NEVER_PLAYED -> R.string.smart_never to Icons.Filled.Explore
+    com.arios.player.data.SmartList.LONG_AUDIO -> R.string.smart_long to Icons.Filled.Podcasts
 }

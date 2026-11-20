@@ -26,6 +26,8 @@ import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.Share
 import androidx.compose.material.icons.filled.SkipNext
 import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.Edit
+import androidx.compose.material.icons.filled.FormatQuote
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.HorizontalDivider
@@ -97,6 +99,8 @@ fun SongMenuSheet(nav: AppNav) {
             SheetItem(Icons.Filled.Album, stringResource(R.string.go_album)) { close { nav.push(Screen.AlbumDetail(song.albumId)) } }
             SheetItem(Icons.Filled.Person, stringResource(R.string.go_artist)) { close { nav.push(Screen.ArtistDetail(song.artist)) } }
             SheetItem(Icons.Filled.Lyrics, stringResource(R.string.edit_lyrics)) { close { nav.push(Screen.LyricsEditor(song.id)) } }
+            SheetItem(Icons.Filled.Edit, stringResource(R.string.edit_tags)) { close { nav.push(Screen.TagEditor(song.id)) } }
+            SheetItem(Icons.Filled.FormatQuote, stringResource(R.string.share_lyrics)) { close { nav.push(Screen.ShareLyrics(song.id)) } }
             SheetItem(Icons.Filled.Share, stringResource(R.string.share)) {
                 close {
                     val i = Intent(Intent.ACTION_SEND).setType(song.mimeType).putExtra(Intent.EXTRA_STREAM, song.uri)

@@ -1,0 +1,105 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/wl_root"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@drawable/widget_bg"
+    android:orientation="vertical"
+    android:padding="14dp">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:gravity="center_vertical"
+        android:orientation="horizontal">
+
+        <ImageView
+            android:id="@+id/wl_art"
+            android:layout_width="44dp"
+            android:layout_height="44dp"
+            android:background="@drawable/widget_art_bg"
+            android:clipToOutline="true"
+            android:contentDescription="@null"
+            android:scaleType="centerCrop"
+            android:src="@drawable/arios_logo" />
+
+        <LinearLayout
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="10dp"
+            android:layout_weight="1"
+            android:orientation="vertical">
+
+            <TextView
+                android:id="@+id/wl_title"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:ellipsize="end"
+                android:fontFamily="@font/plex_arabic_semibold"
+                android:maxLines="1"
+                android:textColor="#FFEFFFF8"
+                android:textSize="14sp" />
+
+            <TextView
+                android:id="@+id/wl_artist"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:ellipsize="end"
+                android:maxLines="1"
+                android:textColor="#FF8DB3A3"
+                android:textSize="11sp" />
+        </LinearLayout>
+
+        <ImageButton
+            android:id="@+id/wl_prev"
+            android:layout_width="36dp"
+            android:layout_height="36dp"
+            android:background="@android:color/transparent"
+            android:contentDescription="@string/previous"
+            android:src="@drawable/ic_prev" />
+
+        <ImageButton
+            android:id="@+id/wl_play"
+            android:layout_width="42dp"
+            android:layout_height="42dp"
+            android:background="@drawable/widget_play_bg"
+            android:contentDescription="@string/play"
+            android:src="@drawable/ic_play" />
+
+        <ImageButton
+            android:id="@+id/wl_next_btn"
+            android:layout_width="36dp"
+            android:layout_height="36dp"
+            android:background="@android:color/transparent"
+            android:contentDescription="@string/next"
+            android:src="@drawable/ic_next" />
+    </LinearLayout>
+
+    <TextView
+        android:id="@+id/wl_line"
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_marginTop="8dp"
+        android:layout_weight="1"
+        android:ellipsize="end"
+        android:fontFamily="@font/plex_arabic_semibold"
+        android:gravity="center"
+        android:maxLines="3"
+        android:shadowColor="#AA2EE6A0"
+        android:shadowRadius="14"
+        android:textColor="#FFFFFFFF"
+        android:textDirection="anyRtl"
+        android:textSize="20sp" />
+
+    <TextView
+        android:id="@+id/wl_next"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:ellipsize="end"
+        android:fontFamily="@font/plex_arabic_semibold"
+        android:gravity="center"
+        android:maxLines="1"
+        android:textColor="#808DB3A3"
+        android:textDirection="anyRtl"
+        android:textSize="13sp" />
+</LinearLayout>

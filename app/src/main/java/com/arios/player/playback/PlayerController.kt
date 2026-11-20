@@ -38,6 +38,7 @@ data class PlayerUiState(
     val queue: List<QueueEntry> = emptyList(),
     val index: Int = -1,
     val sleepEndsAt: Long = 0,
+    val sleepEndOfTrack: Boolean = false,
     val hasMedia: Boolean = false,
 )
 
@@ -47,7 +48,6 @@ class PlayerController(private val context: Context) {
     private var controller: MediaController? = null
     private val _state = MutableStateFlow(PlayerUiState())
     val state: StateFlow<PlayerUiState> = _state
-    private var sleepJob: Job? = null
     private val pending = ArrayList<(MediaController) -> Unit>()
 
     fun connect() {
@@ -187,16 +187,12 @@ class PlayerController(private val context: Context) {
 
     fun audioSessionId(): Int = PlaybackService.instance?.player?.audioSessionId ?: 0
 
-    // ---- sleep timer
-    fun setSleepTimer(minutes: Int) {
-        sleepJob?.cancel()
-        if (minutes <= 0) { _state.value = _state.value.copy(sleepEndsAt = 0); return }
-        val end = System.currentTimeMillis() + minutes * 60_000L
-        _state.value = _state.value.copy(sleepEndsAt = end)
-        sleepJob = Arios.scope.launch {
-            delay(minutes * 60_000L)
-            withContext(Dispatchers.Main) { controller?.pause() }
-            _state.value = _state.value.copy(sleepEndsAt = 0)
-        }
+    // ---- sleep timer (runs inside the playback service, survives closing the app)
+    fun setSleepTimer(minutes: Int) = withController { PlaybackService.instance?.engine?.setSleep(minutes) }
+    fun setSleepEndOfTrack(on: Boolean) = withController { PlaybackService.instance?.engine?.setSleepEndOfTrack(on) }
+
+    init {
+        Arios.scope.launch { AudioState.sleepEndsAt.collect { v -> _state.value = _state.value.copy(sleepEndsAt = v) } }
+        Arios.scope.launch { AudioState.sleepEndOfTrack.collect { v -> _state.value = _state.value.copy(sleepEndOfTrack = v) } }
     }
 }

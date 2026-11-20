@@ -27,13 +27,24 @@ class LibraryRepository(private val context: Context) {
         val songs = withContext(Dispatchers.IO) {
             runCatching { MediaScanner.scan(context, Arios.prefs.minDurationSec * 1000L) }.getOrElse { emptyList() }
         }
+        raw = songs
         _state.value = build(songs)
     }
 
-    /** Test hook: replace the library with [songs]. */
-    internal fun setForTest(songs: List<Song>) { _state.value = build(songs) }
+    /** Every scanned song, including those in excluded folders. */
+    @Volatile var raw: List<Song> = emptyList()
+        private set
 
-    private fun build(songs: List<Song>): LibraryState {
+    /** Re-applies exclusions and tag edits without rescanning the device. */
+    fun rebuild() { Arios.scope.launch { mutex.withLock { _state.value = build(raw) } } }
+
+    /** Test hook: replace the library with [songs]. */
+    internal fun setForTest(songs: List<Song>) { raw = songs; _state.value = build(songs) }
+
+    private fun build(all: List<Song>): LibraryState {
+        val excluded = Arios.prefs.excludedFolders
+        val songs = all.filter { s -> excluded.none { s.folder == it || s.folder.startsWith("$it/") } }
+            .map { Arios.tagOverrides.apply(it) }
         val sorted = songs.sortedWith(compareBy(nameComparator) { it.title })
         val albums = songs.groupBy { it.albumId }.map { (id, list) ->
             val tracks = list.sortedWith(compareBy<Song> { it.track }.thenBy(nameComparator) { it.title })

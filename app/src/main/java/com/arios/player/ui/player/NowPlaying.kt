@@ -98,7 +98,8 @@ fun NowPlayingScreen(nav: AppNav) {
                 Box(Modifier.staggerIn(0, 70)) { TopBar(nav, song) }
                 Spacer(Modifier.height(10.dp))
                 CoverArt(song, Modifier.fillMaxWidth().aspectRatio(1f).staggerIn(1, 70))
-                Spacer(Modifier.height(24.dp))
+                com.arios.player.ui.theme.VisualizerBars(Modifier.fillMaxWidth().height(40.dp).padding(horizontal = 18.dp).staggerIn(2, 70), palette.base.let { androidx.compose.ui.graphics.lerp(it, AriosColors.Mint, 0.5f) })
+                Spacer(Modifier.height(10.dp))
                 Box(Modifier.staggerIn(2, 70)) { TitleBlock(state, song) }
                 Spacer(Modifier.height(14.dp))
                 Box(Modifier.staggerIn(3, 70)) { ActionsRow(nav, state, song) }
@@ -106,6 +107,7 @@ fun NowPlayingScreen(nav: AppNav) {
                 Box(Modifier.staggerIn(4, 70)) { SeekBar(state) }
                 Spacer(Modifier.height(4.dp))
                 Box(Modifier.staggerIn(5, 70)) { TransportControls(state) }
+                if (song != null && song.durationMs >= 20 * 60_000L) LongAudioRow()
                 Spacer(Modifier.height(22.dp))
                 LyricsCard(nav, song, palette, Modifier.fillMaxWidth().height(400.dp).staggerIn(6, 70), expanded = false)
                 Spacer(Modifier.height(32.dp))
@@ -133,14 +135,20 @@ private fun TopBar(nav: AppNav, song: Song?) {
             DropdownMenu(menu, { menu = false }) {
                 DropdownMenuItem({ Text(stringResource(R.string.playback_speed) + "  (${state.speed}x)") }, { menu = false; speed = true }, leadingIcon = { Icon(Icons.Filled.Speed, null) })
                 DropdownMenuItem({ Text(stringResource(R.string.sleep_timer)) }, { menu = false; sleep = true }, leadingIcon = { Icon(Icons.Filled.Bedtime, null) })
-                DropdownMenuItem({ Text(stringResource(R.string.equalizer)) }, {
+                DropdownMenuItem({ Text(stringResource(R.string.sound)) }, { menu = false; nav.push(Screen.Sound) }, leadingIcon = { Icon(Icons.Filled.Equalizer, null) })
+                DropdownMenuItem({ Text(stringResource(R.string.car_mode)) }, { menu = false; nav.carMode = true }, leadingIcon = { Icon(Icons.Filled.DirectionsCar, null) })
+                if (song != null) {
+                    DropdownMenuItem({ Text(stringResource(R.string.share_lyrics)) }, { menu = false; nav.push(Screen.ShareLyrics(song.id)) }, leadingIcon = { Icon(Icons.Filled.FormatQuote, null) })
+                    DropdownMenuItem({ Text(stringResource(R.string.edit_tags)) }, { menu = false; nav.push(Screen.TagEditor(song.id)) }, leadingIcon = { Icon(Icons.Filled.Edit, null) })
+                }
+                DropdownMenuItem({ Text(stringResource(R.string.system_equalizer)) }, {
                     menu = false
                     val i = Intent(AudioEffect.ACTION_DISPLAY_AUDIO_EFFECT_CONTROL_PANEL)
                         .putExtra(AudioEffect.EXTRA_AUDIO_SESSION, Arios.player.audioSessionId())
                         .putExtra(AudioEffect.EXTRA_PACKAGE_NAME, context.packageName)
                         .putExtra(AudioEffect.EXTRA_CONTENT_TYPE, AudioEffect.CONTENT_TYPE_MUSIC)
                     runCatching { context.startActivity(i) }.onFailure { nav.snack = context.getString(R.string.no_equalizer) }
-                }, leadingIcon = { Icon(Icons.Filled.Equalizer, null) })
+                }, leadingIcon = { Icon(Icons.Filled.Tune, null) })
                 if (song != null) {
                     DropdownMenuItem({ Text(stringResource(R.string.search_lyrics)) }, { menu = false; nav.lyricsSearchFor = song }, leadingIcon = { Icon(Icons.Filled.ManageSearch, null) })
                     DropdownMenuItem({ Text(stringResource(R.string.edit_lyrics)) }, { menu = false; nav.push(Screen.LyricsEditor(song.id)) }, leadingIcon = { Icon(Icons.Filled.EditNote, null) })
@@ -230,7 +238,7 @@ private fun ActionsRow(nav: AppNav, state: PlayerUiState, song: Song?) {
         ActionChip(Icons.AutoMirrored.Filled.QueueMusic, stringResource(R.string.queue)) { nav.queueOpen = true }
         ActionChip(Icons.Filled.Speed, "${state.speed}x") { speed = true }
         ActionChip(Icons.AutoMirrored.Filled.PlaylistAdd, stringResource(R.string.save)) { song?.let { nav.addToPlaylist = listOf(it) } }
-        if (state.sleepEndsAt > 0) ActionChip(Icons.Filled.Bedtime, stringResource(R.string.timer_on), AriosColors.Mint) { Arios.player.setSleepTimer(0) }
+        if (state.sleepEndsAt > 0 || state.sleepEndOfTrack) ActionChip(Icons.Filled.Bedtime, stringResource(R.string.timer_on), AriosColors.Mint) { Arios.player.setSleepTimer(0); Arios.player.setSleepEndOfTrack(false) }
     }
     if (speed) SpeedDialog(state.speed) { speed = false }
 }
@@ -305,3 +313,14 @@ fun LyricsBody(nav: AppNav, song: Song?, ls: LyricsState, offset: Long, fontSize
 
 @Suppress("FunctionName")
 private fun Icons.Filled.LyricsOff() = Icons.Filled.Lyrics
+
+/** −30 s / +30 s for podcasts, lectures and audiobooks. */
+@Composable
+private fun LongAudioRow() {
+    com.arios.player.ui.player.Ltr {
+        Row(Modifier.fillMaxWidth().padding(top = 6.dp), horizontalArrangement = Arrangement.SpaceEvenly) {
+            ActionChip(Icons.Filled.Replay30, stringResource(R.string.back_30)) { Arios.player.seekBy(-30_000) }
+            ActionChip(Icons.Filled.Forward30, stringResource(R.string.forward_30)) { Arios.player.seekBy(30_000) }
+        }
+    }
+}

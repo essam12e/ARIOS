@@ -115,10 +115,10 @@ fun LyricsSearchSheet(nav: AppNav) {
                             style = MaterialTheme.typography.bodySmall, color = AriosColors.SilverDim)
                         Spacer(Modifier.height(4.dp))
                         Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-                            if (sc.confident) Pill(stringResource(R.string.best_match), color = Color(0xFF0F5A3A))
+                            if (sc.confident) Pill(stringResource(R.string.best_match), color = androidx.compose.ui.graphics.lerp(AriosColors.Emerald, Color.Black, 0.5f))
                             Pill(c.sourceName)
                             c.durationSec?.let { Pill(formatTime(it * 1000L)) }
-                            if (c.syncedHint == true) Pill(stringResource(R.string.synced), color = Color(0xFF14382A))
+                            if (c.syncedHint == true) Pill(stringResource(R.string.synced), color = androidx.compose.ui.graphics.lerp(AriosColors.Emerald, Color.Black, 0.7f))
                         }
                     }
                     Icon(Icons.Filled.Visibility, null, tint = AriosColors.SilverDim)

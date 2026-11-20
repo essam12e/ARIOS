@@ -63,7 +63,7 @@ fun Artwork(key: ArtKey?, modifier: Modifier = Modifier, shape: Shape = RoundedC
 private fun Placeholder(iconSize: Dp) {
     Box(
         Modifier.fillMaxSize().background(
-            Brush.linearGradient(listOf(Color(0xFF2A2D33), Color(0xFF15161A)))
+            Brush.linearGradient(listOf(AriosColors.SurfaceHighest, AriosColors.Surface))
         ),
         contentAlignment = Alignment.Center,
     ) { Icon(Icons.Rounded.MusicNote, null, tint = AriosColors.Steel, modifier = Modifier.size(iconSize)) }

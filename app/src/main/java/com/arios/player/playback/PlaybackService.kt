@@ -46,11 +46,22 @@ class PlaybackService : MediaLibraryService() {
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Main)
     private var ticker: Job? = null
     private var searchResults: List<Song> = emptyList()
+    var engine: AudioEngine? = null
+        private set
 
     override fun onCreate() {
         super.onCreate()
         val prefs = Arios.prefs
-        player = ExoPlayer.Builder(this)
+        // renderers with a PCM tap so the visualizer can see the music (no mic permission)
+        val renderers = object : androidx.media3.exoplayer.DefaultRenderersFactory(this) {
+            override fun buildAudioSink(context: android.content.Context, enableFloatOutput: Boolean, enableAudioTrackPlaybackParams: Boolean): androidx.media3.exoplayer.audio.AudioSink =
+                androidx.media3.exoplayer.audio.DefaultAudioSink.Builder(context)
+                    .setAudioProcessors(arrayOf(Spectrum.processor))
+                    .setEnableFloatOutput(enableFloatOutput)
+                    .setEnableAudioTrackPlaybackParams(enableAudioTrackPlaybackParams)
+                    .build()
+        }
+        player = ExoPlayer.Builder(this, renderers)
             .setAudioAttributes(
                 AudioAttributes.Builder().setUsage(C.USAGE_MEDIA).setContentType(C.AUDIO_CONTENT_TYPE_MUSIC).build(),
                 /* handleAudioFocus = */ true,
@@ -64,6 +75,7 @@ class PlaybackService : MediaLibraryService() {
         player.repeatMode = prefs.repeatMode
         player.playbackParameters = PlaybackParameters(prefs.playbackSpeed)
         player.addListener(listener)
+        engine = AudioEngine(this, player, scope).also { it.attach() }
 
         val open = PendingIntent.getActivity(
             this, 0,
@@ -89,6 +101,7 @@ class PlaybackService : MediaLibraryService() {
 
     override fun onDestroy() {
         saveState()
+        engine?.release(); engine = null
         instance = null
         scope.cancel()
         session?.run { player.release(); release() }
@@ -112,6 +125,7 @@ class PlaybackService : MediaLibraryService() {
         override fun onRepeatModeChanged(repeatMode: Int) { Arios.prefs.repeatMode = repeatMode }
         override fun onPlaybackParametersChanged(playbackParameters: PlaybackParameters) {
             Arios.prefs.playbackSpeed = playbackParameters.speed
+            engine?.setSpeed(playbackParameters)
         }
         override fun onPlayerError(error: PlaybackException) {
             // skip unplayable/missing files instead of stopping

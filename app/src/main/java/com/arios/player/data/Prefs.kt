@@ -54,6 +54,42 @@ class Prefs(context: Context) {
         get() = sp.getBoolean("album_grid", true)
         set(v) { sp.edit().putBoolean("album_grid", v).apply(); bump() }
 
+    // ---- audio
+    var crossfadeSec: Int
+        get() = sp.getInt("crossfade", 0)
+        set(v) { sp.edit().putInt("crossfade", v).apply(); bump() }
+    var normalize: Boolean
+        get() = sp.getBoolean("normalize", false)
+        set(v) { sp.edit().putBoolean("normalize", v).apply(); bump() }
+    var resumeLong: Boolean
+        get() = sp.getBoolean("resume_long", true)
+        set(v) { sp.edit().putBoolean("resume_long", v).apply(); bump() }
+    var eqJson: String
+        get() = sp.getString("eq", "") ?: ""
+        set(v) { sp.edit().putString("eq", v).apply(); bump() }
+    var sleepFade: Boolean
+        get() = sp.getBoolean("sleep_fade", true)
+        set(v) { sp.edit().putBoolean("sleep_fade", v).apply(); bump() }
+
+    // ---- library
+    var excludedFolders: Set<String>
+        get() = sp.getStringSet("excluded", emptySet())?.toSet() ?: emptySet()
+        set(v) { sp.edit().putStringSet("excluded", v).apply(); bump() }
+
+    // ---- look
+    var accent: Int
+        get() = sp.getInt("accent", 0)
+        set(v) { sp.edit().putInt("accent", v).apply(); bump() }
+    var amoled: Boolean
+        get() = sp.getBoolean("amoled", false)
+        set(v) { sp.edit().putBoolean("amoled", v).apply(); bump() }
+    var dynamicColor: Boolean
+        get() = sp.getBoolean("dynamic_color", false)
+        set(v) { sp.edit().putBoolean("dynamic_color", v).apply(); bump() }
+    var visualizer: Boolean
+        get() = sp.getBoolean("visualizer", true)
+        set(v) { sp.edit().putBoolean("visualizer", v).apply(); bump() }
+
     fun sourceEnabled(id: String): Boolean = sp.getBoolean("src_$id", true)
     fun setSourceEnabled(id: String, v: Boolean) { sp.edit().putBoolean("src_$id", v).apply(); bump() }
 

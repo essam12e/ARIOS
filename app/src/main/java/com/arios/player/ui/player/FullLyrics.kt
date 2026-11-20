@@ -85,7 +85,7 @@ fun FullLyricsScreen(nav: AppNav) {
                     IconButton(onClick = { Arios.player.previous() }) { Icon(Icons.Filled.SkipPrevious, null, Modifier.size(34.dp), tint = Color.White) }
                     Spacer(Modifier.width(18.dp))
                     Box(Modifier.size(60.dp).glowHalo(state.isPlaying).clip(CircleShape).background(AriosColors.brand).clickable { Arios.player.toggle() }, contentAlignment = Alignment.Center) {
-                        Icon(if (state.isPlaying) Icons.Filled.Pause else Icons.Filled.PlayArrow, null, Modifier.size(34.dp), tint = Color.Black)
+                        PlayPauseIcon(state.isPlaying, 34.dp)
                     }
                     Spacer(Modifier.width(18.dp))
                     IconButton(onClick = { Arios.player.next() }) { Icon(Icons.Filled.SkipNext, null, Modifier.size(34.dp), tint = Color.White) }

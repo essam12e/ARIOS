@@ -15,6 +15,8 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.animation.togetherWith
 import androidx.compose.ui.graphics.lerp
 import androidx.compose.ui.graphics.luminance
 import androidx.compose.ui.platform.LocalContext
@@ -76,7 +78,11 @@ fun SeekBar(state: PlayerUiState, modifier: Modifier = Modifier, color: Color = 
     var pos by remember { mutableLongStateOf(Arios.player.position()) }
     var dragging by remember { mutableStateOf<Float?>(null) }
     LaunchedEffect(state.songId, state.isPlaying) {
-        while (true) { pos = Arios.player.position(); delay(250) }
+        // follow the playhead every frame while playing (smooth, no 250 ms steps)
+        while (true) {
+            if (state.isPlaying && dragging == null) withFrameMillis { pos = Arios.player.position() }
+            else { pos = Arios.player.position(); delay(250) }
+        }
     }
     val dur = state.durationMs.coerceAtLeast(1)
     Ltr { Column(modifier) {
@@ -102,7 +108,8 @@ fun TransportControls(state: PlayerUiState, modifier: Modifier = Modifier, big: 
     val playSize = if (big) 76.dp else 58.dp
     Ltr { Row(modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
         IconButton(onClick = { Arios.player.setShuffle(!state.shuffle) }) {
-            Icon(Icons.Filled.Shuffle, stringResource(R.string.shuffle), tint = if (state.shuffle) AriosColors.Mint else Color.White.copy(alpha = 0.85f))
+            val c by animateColorAsState(if (state.shuffle) AriosColors.Mint else Color.White.copy(alpha = 0.85f), label = "sh")
+            Icon(Icons.Filled.Shuffle, stringResource(R.string.shuffle), tint = c)
         }
         IconButton(onClick = { Arios.player.previous() }, Modifier.size(56.dp).bounceClick { Arios.player.previous() }) {
             Icon(Icons.Filled.SkipPrevious, stringResource(R.string.previous), Modifier.size(40.dp), tint = Color.White)
@@ -112,11 +119,7 @@ fun TransportControls(state: PlayerUiState, modifier: Modifier = Modifier, big: 
             contentAlignment = Alignment.Center,
         ) {
             if (state.buffering && !state.isPlaying) CircularProgressIndicator(Modifier.size(28.dp), color = Color.Black, strokeWidth = 3.dp)
-            else Icon(
-                if (state.isPlaying) Icons.Filled.Pause else Icons.Filled.PlayArrow,
-                stringResource(if (state.isPlaying) R.string.pause else R.string.play),
-                Modifier.size(playSize * 0.55f), tint = Color.Black,
-            )
+            else PlayPauseIcon(state.isPlaying, playSize * 0.55f)
         }
         IconButton(onClick = { Arios.player.next() }, Modifier.size(56.dp).bounceClick { Arios.player.next() }) {
             Icon(Icons.Filled.SkipNext, stringResource(R.string.next), Modifier.size(40.dp), tint = Color.White)
@@ -183,4 +186,26 @@ fun SleepDialog(onDismiss: () -> Unit) {
         },
         confirmButton = { TextButton(onClick = onDismiss) { Text(stringResource(R.string.close)) } },
     )
+}
+
+/** Play ⇄ pause icon that morphs with a springy spin + scale instead of swapping. */
+@Composable
+fun PlayPauseIcon(playing: Boolean, size: androidx.compose.ui.unit.Dp, tint: Color = Color.Black) {
+    androidx.compose.animation.AnimatedContent(
+        targetState = playing,
+        transitionSpec = {
+            (androidx.compose.animation.scaleIn(com.arios.player.ui.theme.Motion.bouncy(), initialScale = 0.4f) +
+                androidx.compose.animation.fadeIn(tween(180))) togetherWith
+                (androidx.compose.animation.scaleOut(tween(160), targetScale = 0.4f) + androidx.compose.animation.fadeOut(tween(120)))
+        },
+        label = "pp",
+    ) { p ->
+        val rot = remember { androidx.compose.animation.core.Animatable(-90f) }
+        LaunchedEffect(Unit) { rot.animateTo(0f, com.arios.player.ui.theme.Motion.bouncy()) }
+        Icon(
+            if (p) Icons.Filled.Pause else Icons.Filled.PlayArrow,
+            stringResource(if (p) R.string.pause else R.string.play),
+            Modifier.size(size).graphicsLayer { rotationZ = rot.value }, tint = tint,
+        )
+    }
 }

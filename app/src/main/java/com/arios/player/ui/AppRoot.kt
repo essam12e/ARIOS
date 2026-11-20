@@ -31,10 +31,15 @@ import com.arios.player.ui.player.*
 import com.arios.player.ui.search.SearchScreen
 import com.arios.player.ui.settings.SettingsScreen
 import com.arios.player.ui.theme.AriosColors
+import com.arios.player.ui.theme.Motion
+import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.foundation.shape.RoundedCornerShape
 import com.arios.player.ui.theme.bounceClick
 import com.arios.player.ui.theme.glass
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.spring
+
+private data class NavTarget(val screen: Any, val depth: Int, val tab: Int)
 
 @Composable
 fun AppRoot(nav: AppNav, hasPermission: Boolean, requestPermission: () -> Unit) {
@@ -48,49 +53,69 @@ fun AppRoot(nav: AppNav, hasPermission: Boolean, requestPermission: () -> Unit) 
     val miniVisible = player.hasMedia
     val bottomPadding = (if (miniVisible) 76.dp else 0.dp) + 84.dp
 
+    // depth effect: the app recedes (scale + dim + rounded) while the player rises over it
+    val depth by animateFloatAsState(
+        if (nav.playerOpen || nav.lyricsFull) 1f else 0f,
+        spring(dampingRatio = 0.9f, stiffness = 220f), label = "depth",
+    )
+    val rtl = androidx.compose.ui.platform.LocalLayoutDirection.current == androidx.compose.ui.unit.LayoutDirection.Rtl
+
     Box(Modifier.fillMaxSize().background(AriosColors.Black)) {
         com.arios.player.ui.theme.AuroraBackground()
-        val top = nav.stack.lastOrNull()
-        AnimatedContent(
-            targetState = top ?: nav.tab,
-            transitionSpec = { (fadeIn(tween(220)) + slideInVertically { it / 24 }) togetherWith fadeOut(tween(160)) },
-            label = "screen",
-        ) { target ->
-            Box(Modifier.fillMaxSize()) {
-                when (target) {
-                    is Screen.LyricsEditor -> LyricsEditorScreen(nav, target.songId, bottomPadding)
-                    is Screen -> DetailScreen(nav, target, bottomPadding)
-                    Tab.LIBRARY -> LibraryScreen(nav, hasPermission, requestPermission, bottomPadding)
-                    Tab.SEARCH -> SearchScreen(nav, bottomPadding)
-                    Tab.DOWNLOADS -> DownloadsScreen(nav, bottomPadding)
-                    Tab.SETTINGS -> SettingsScreen(nav, bottomPadding)
+        Box(
+            Modifier.fillMaxSize().graphicsLayer {
+                val sc = 1f - 0.08f * depth
+                scaleX = sc; scaleY = sc
+                alpha = 1f - 0.55f * depth
+                translationY = -24f * depth
+                shape = RoundedCornerShape((32 * depth).dp)
+                clip = depth > 0.01f
+            }
+        ) {
+            val target = NavTarget(nav.stack.lastOrNull() ?: nav.tab, nav.stack.size, nav.tab.ordinal)
+            AnimatedContent(
+                targetState = target,
+                transitionSpec = {
+                    when {
+                        targetState.depth != initialState.depth -> Motion.page(targetState.depth > initialState.depth, rtl)
+                        targetState.tab != initialState.tab -> Motion.tab(targetState.tab > initialState.tab, rtl)
+                        else -> Motion.page(true, rtl)
+                    }.using(SizeTransform(clip = false))
+                },
+                contentKey = { it.screen },
+                label = "screen",
+            ) { t ->
+                Box(Modifier.fillMaxSize()) {
+                    when (val target2 = t.screen) {
+                        is Screen.LyricsEditor -> LyricsEditorScreen(nav, target2.songId, bottomPadding)
+                        is Screen -> DetailScreen(nav, target2, bottomPadding)
+                        Tab.LIBRARY -> LibraryScreen(nav, hasPermission, requestPermission, bottomPadding)
+                        Tab.SEARCH -> SearchScreen(nav, bottomPadding)
+                        Tab.DOWNLOADS -> DownloadsScreen(nav, bottomPadding)
+                        Tab.SETTINGS -> SettingsScreen(nav, bottomPadding)
+                    }
                 }
             }
-        }
 
-        // bottom gradient + mini player + nav bar
-        Column(Modifier.align(Alignment.BottomCenter).fillMaxWidth()
-            .background(Brush.verticalGradient(listOf(Color.Transparent, AriosColors.Black.copy(alpha = 0.75f), AriosColors.Black.copy(alpha = 0.95f))))
-            .navigationBarsPadding().padding(top = 18.dp)) {
-            MiniPlayer(nav)
-            Spacer(Modifier.height(8.dp))
-            BottomBar(nav)
-            Spacer(Modifier.height(8.dp))
+            // bottom gradient + mini player + nav bar
+            Column(Modifier.align(Alignment.BottomCenter).fillMaxWidth()
+                .background(Brush.verticalGradient(listOf(Color.Transparent, AriosColors.Black.copy(alpha = 0.75f), AriosColors.Black.copy(alpha = 0.95f))))
+                .navigationBarsPadding().padding(top = 18.dp)) {
+                AnimatedVisibility(
+                    miniVisible,
+                    enter = slideInVertically(Motion.offsetSoft) { it } + Motion.fadeInSoft(),
+                    exit = slideOutVertically { it } + Motion.fadeOutSoft(),
+                ) { MiniPlayer(nav) }
+                Spacer(Modifier.height(8.dp))
+                BottomBar(nav)
+                Spacer(Modifier.height(8.dp))
+            }
         }
 
         SnackbarHost(snackHost, Modifier.align(Alignment.BottomCenter).padding(bottom = bottomPadding + 8.dp))
 
-        AnimatedVisibility(
-            nav.playerOpen,
-            enter = slideInVertically(tween(320)) { it } + fadeIn(),
-            exit = slideOutVertically(tween(260)) { it } + fadeOut(),
-        ) { NowPlayingScreen(nav) }
-
-        AnimatedVisibility(
-            nav.lyricsFull,
-            enter = slideInVertically(tween(320)) { it } + fadeIn(),
-            exit = slideOutVertically(tween(260)) { it } + fadeOut(),
-        ) { FullLyricsScreen(nav) }
+        AnimatedVisibility(nav.playerOpen, enter = Motion.playerEnter, exit = Motion.playerExit) { NowPlayingScreen(nav) }
+        AnimatedVisibility(nav.lyricsFull, enter = Motion.lyricsEnter, exit = Motion.lyricsExit) { FullLyricsScreen(nav) }
 
         QueueSheet(nav)
         SongMenuSheet(nav)

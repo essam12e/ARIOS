@@ -129,4 +129,28 @@ class ScreenshotTest {
         playing(songs[4], 16_400)
         shoot("4_full_lyrics", AppNav().apply { lyricsFull = true })
     }
+
+    private fun frames(name: String, nav: AppNav, stepMs: Long, count: Int, before: (Int) -> Unit = {}, trigger: () -> Unit) {
+        rule.mainClock.autoAdvance = false
+        rule.setContent { AriosTheme { androidx.compose.material3.Surface(color = androidx.compose.ui.graphics.Color.Transparent) { AppRoot(nav, true) {} } } }
+        repeat(6) { rule.mainClock.advanceTimeBy(400); Thread.sleep(150) }
+        trigger()
+        for (i in 0 until count) {
+            before(i)
+            rule.mainClock.advanceTimeBy(stepMs)
+            rule.onRoot().captureRoboImage("build/frames/${name}_" + (if (i < 10) "0$i" else "$i") + ".png")
+        }
+    }
+
+    @Test fun motionPlayerOpen() {
+        playing(songs[4], 17_200)
+        val nav = AppNav()
+        frames("open", nav, 50, 12) { nav.playerOpen = true }
+    }
+
+    @Test fun motionLyricsGlide() {
+        playing(songs[4], 20_400)
+        val nav = AppNav().apply { lyricsFull = true }
+        frames("glide", nav, 80, 12, before = { Arios.player.testPosition = 20_900L + it * 80 }) {}
+    }
 }

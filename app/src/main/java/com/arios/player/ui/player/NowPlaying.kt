@@ -49,6 +49,7 @@ import com.arios.player.ui.components.Artwork
 import com.arios.player.ui.components.displayArtist
 import com.arios.player.ui.theme.AriosColors
 import com.arios.player.ui.theme.glass
+import com.arios.player.ui.theme.staggerIn
 import kotlinx.coroutines.launch
 
 @Composable
@@ -93,19 +94,20 @@ fun NowPlayingScreen(nav: AppNav) {
             Column(
                 Modifier.fillMaxSize().verticalScroll(rememberScrollState()).systemBarsPadding().padding(horizontal = 22.dp)
             ) {
-                TopBar(nav, song)
+                // GSAP-style timeline: each block rises in one after another
+                Box(Modifier.staggerIn(0, 70)) { TopBar(nav, song) }
                 Spacer(Modifier.height(10.dp))
-                CoverArt(song, Modifier.fillMaxWidth().aspectRatio(1f))
+                CoverArt(song, Modifier.fillMaxWidth().aspectRatio(1f).staggerIn(1, 70))
                 Spacer(Modifier.height(24.dp))
-                TitleBlock(state, song)
+                Box(Modifier.staggerIn(2, 70)) { TitleBlock(state, song) }
                 Spacer(Modifier.height(14.dp))
-                ActionsRow(nav, state, song)
+                Box(Modifier.staggerIn(3, 70)) { ActionsRow(nav, state, song) }
                 Spacer(Modifier.height(14.dp))
-                SeekBar(state)
+                Box(Modifier.staggerIn(4, 70)) { SeekBar(state) }
                 Spacer(Modifier.height(4.dp))
-                TransportControls(state)
+                Box(Modifier.staggerIn(5, 70)) { TransportControls(state) }
                 Spacer(Modifier.height(22.dp))
-                LyricsCard(nav, song, palette, Modifier.fillMaxWidth().height(400.dp), expanded = false)
+                LyricsCard(nav, song, palette, Modifier.fillMaxWidth().height(400.dp).staggerIn(6, 70), expanded = false)
                 Spacer(Modifier.height(32.dp))
             }
         }
@@ -196,6 +198,13 @@ private fun TitleBlock(state: PlayerUiState, song: Song?) {
     val favs by Arios.userStore.favorites.collectAsState()
     val fav = song != null && song.key in favs
     val unknown = stringResource(R.string.unknown)
+    val pop = remember { Animatable(1f) }
+    var first by remember { mutableStateOf(true) }
+    LaunchedEffect(fav) {
+        if (first) { first = false; return@LaunchedEffect }
+        pop.snapTo(0.6f); pop.animateTo(1f, com.arios.player.ui.theme.Motion.bouncy())
+    }
+    val heartTint by androidx.compose.animation.animateColorAsState(if (fav) AriosColors.Mint else Color.White, label = "heart")
     Row(verticalAlignment = Alignment.CenterVertically) {
         Column(Modifier.weight(1f)) {
             Text(
@@ -208,7 +217,7 @@ private fun TitleBlock(state: PlayerUiState, song: Song?) {
         }
         IconButton(onClick = { song?.let { Arios.userStore.toggleFavorite(it.key); com.arios.player.playback.PlaybackService.instance?.refreshExtras() } }) {
             Icon(if (fav) Icons.Filled.Favorite else Icons.Filled.FavoriteBorder, stringResource(R.string.add_favorite),
-                tint = if (fav) AriosColors.Mint else Color.White, modifier = Modifier.size(28.dp))
+                tint = heartTint, modifier = Modifier.size(28.dp).graphicsLayer { scaleX = pop.value; scaleY = pop.value })
         }
     }
 }

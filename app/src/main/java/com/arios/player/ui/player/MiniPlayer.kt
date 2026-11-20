@@ -14,6 +14,8 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.animation.togetherWith
+import androidx.compose.animation.core.tween
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextOverflow
@@ -40,8 +42,8 @@ fun MiniPlayer(nav: AppNav, modifier: Modifier = Modifier) {
     var progress by remember { mutableFloatStateOf(0f) }
     LaunchedEffect(state.songId, state.isPlaying) {
         while (true) {
-            progress = if (state.durationMs > 0) (Arios.player.position().toFloat() / state.durationMs).coerceIn(0f, 1f) else 0f
-            delay(500)
+            val v = if (state.durationMs > 0) (Arios.player.position().toFloat() / state.durationMs).coerceIn(0f, 1f) else 0f
+            if (state.isPlaying) withFrameMillis { progress = v } else { progress = v; delay(500) }
         }
     }
     val unknown = stringResource(R.string.unknown)
@@ -56,16 +58,30 @@ fun MiniPlayer(nav: AppNav, modifier: Modifier = Modifier) {
             .pointerInput(Unit) { detectVerticalDragGestures { _, d -> if (d < -12) nav.playerOpen = true } },
     ) {
         Row(Modifier.padding(8.dp), verticalAlignment = Alignment.CenterVertically) {
-            Artwork(song?.artKey(), Modifier.size(48.dp), ArchShape, 18.dp)
-            Spacer(Modifier.width(12.dp))
-            Column(Modifier.weight(1f)) {
-                Text(song?.title ?: state.title, color = Color.White, style = MaterialTheme.typography.titleSmall, maxLines = 1, overflow = TextOverflow.Ellipsis)
-                Text(displayArtist(song?.artist ?: state.artist, unknown), color = Color.White.copy(alpha = 0.7f), style = MaterialTheme.typography.bodySmall, maxLines = 1, overflow = TextOverflow.Ellipsis)
+            androidx.compose.animation.AnimatedContent(
+                targetState = song,
+                contentKey = { it?.id },
+                transitionSpec = {
+                    (androidx.compose.animation.slideInVertically(com.arios.player.ui.theme.Motion.offsetSoft) { it / 2 } +
+                        com.arios.player.ui.theme.Motion.fadeInSoft()) togetherWith
+                        (androidx.compose.animation.slideOutVertically(tween(260)) { -it / 2 } + com.arios.player.ui.theme.Motion.fadeOutSoft(200))
+                },
+                modifier = Modifier.weight(1f),
+                label = "mini",
+            ) { s ->
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Artwork(s?.artKey(), Modifier.size(48.dp), ArchShape, 18.dp)
+                    Spacer(Modifier.width(12.dp))
+                    Column(Modifier.weight(1f)) {
+                        Text(s?.title ?: state.title, color = Color.White, style = MaterialTheme.typography.titleSmall, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                        Text(displayArtist(s?.artist ?: state.artist, unknown), color = Color.White.copy(alpha = 0.7f), style = MaterialTheme.typography.bodySmall, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                    }
+                }
             }
             Ltr { Row(verticalAlignment = Alignment.CenterVertically) {
             IconButton(onClick = { Arios.player.previous() }) { Icon(Icons.Filled.SkipPrevious, stringResource(R.string.previous), tint = Color.White) }
             Box(Modifier.size(46.dp).glowHalo(state.isPlaying).clip(CircleShape).background(AriosColors.brand).bounceClick { Arios.player.toggle() }, contentAlignment = Alignment.Center) {
-                Icon(if (state.isPlaying) Icons.Filled.Pause else Icons.Filled.PlayArrow, stringResource(R.string.play), tint = Color.Black)
+                PlayPauseIcon(state.isPlaying, 24.dp)
             }
             IconButton(onClick = { Arios.player.next() }) { Icon(Icons.Filled.SkipNext, stringResource(R.string.next), tint = Color.White) }
             } }

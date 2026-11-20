@@ -34,6 +34,8 @@ import com.arios.player.lyrics.LyricLine
 import com.arios.player.lyrics.Lyrics
 import com.arios.player.lyrics.LyricsState
 import com.arios.player.ui.theme.lyricStyle
+import com.arios.player.ui.theme.glideTo
+import com.arios.player.ui.theme.Motion
 import kotlinx.coroutines.delay
 
 /** Loads lyrics for [song] (cache → online) and reloads when lyrics are edited. */
@@ -98,7 +100,7 @@ fun SyncedLyricsView(
         if (since < 3500) delay(3500 - since)
         auto = true
         runCatching {
-            listState.animateScrollToItem(current.coerceAtLeast(0) + 1, -(viewport * topFraction).toInt())
+            listState.glideTo(current.coerceAtLeast(0) + 1, (viewport * topFraction).toInt(), 750)
         }
         auto = false
     }
@@ -144,10 +146,12 @@ private fun LyricLineItem(
     blur: Boolean,
     onClick: () -> Unit,
 ) {
-    val scale by animateFloatAsState(if (isActive) 1f else 0.94f, spring(stiffness = Spring.StiffnessLow), label = "s")
+    val scale by animateFloatAsState(if (isActive) 1f else 0.94f, spring(dampingRatio = 0.7f, stiffness = 180f), label = "s")
+    // highlight fades in/out (GSAP-style ease) instead of switching instantly
+    val lit by animateFloatAsState(if (isActive) 1f else 0f, tween(if (isActive) 380 else 900, easing = Motion.EaseOutQuint), label = "lit")
     val alpha by animateFloatAsState(
         when { isActive -> 1f; distance < 0 -> 0.55f; kotlin.math.abs(distance) == 1 -> 0.7f; else -> 0.5f },
-        tween(400), label = "a",
+        tween(650, easing = Motion.EaseOutQuint), label = "a",
     )
     val blurRadius by animateDpAsState(if (blur && !isActive) (kotlin.math.abs(distance).coerceAtMost(4) * 0.8f).dp else 0.dp, label = "b")
     val origin = if (align == TextAlign.Center) 0.5f else if (Lyrics.isRtl(line.text)) 1f else 0f
@@ -172,7 +176,10 @@ private fun LyricLineItem(
             val text = if (wordByWord && line.words.isNotEmpty()) karaoke(line, pos.value, colors) else AnnotatedString(line.text)
             Text(text, style = style.copy(color = colors.active, shadow = Shadow(colors.glow, blurRadius = 18f)), modifier = Modifier.fillMaxWidth())
         } else {
-            Text(line.text, style = style.copy(color = if (distance < 0) colors.past else colors.inactive), modifier = Modifier.fillMaxWidth())
+            val base = if (distance < 0) colors.past else colors.inactive
+            Text(line.text, style = style.copy(color = lerp(base, colors.active, lit),
+                shadow = if (lit > 0.05f) Shadow(colors.glow.copy(alpha = colors.glow.alpha * lit), blurRadius = 18f) else null),
+                modifier = Modifier.fillMaxWidth())
         }
         if (showTranslation && !line.translation.isNullOrBlank()) {
             Spacer(Modifier.height(4.dp))

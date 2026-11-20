@@ -108,7 +108,8 @@ fun LibraryScreen(nav: AppNav, hasPermission: Boolean, requestPermission: () -> 
             Box(Modifier.fillMaxWidth().padding(48.dp), contentAlignment = Alignment.Center) { CircularProgressIndicator(color = AriosColors.Silver) }
             return@Column
         }
-        AnimatedContent(tab, transitionSpec = { fadeIn() togetherWith fadeOut() }, label = "tab") { t ->
+        val rtl = androidx.compose.ui.platform.LocalLayoutDirection.current == androidx.compose.ui.unit.LayoutDirection.Rtl
+        AnimatedContent(tab, transitionSpec = { com.arios.player.ui.theme.Motion.tab(targetState > initialState, rtl) }, label = "tab") { t ->
             Box(Modifier.fillMaxSize()) {
                 when (t) {
                     0 -> FoldersTab(nav, lib.folders, bottomPadding)

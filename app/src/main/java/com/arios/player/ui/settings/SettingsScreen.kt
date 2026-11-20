@@ -107,6 +107,7 @@ fun SettingsScreen(nav: AppNav, bottomPadding: androidx.compose.ui.unit.Dp) {
         Item(Icons.Filled.HistoryToggleOff, stringResource(R.string.clear_history), null) { Arios.history.clear(); nav.snack = context.getString(R.string.done) }
 
         Section(stringResource(R.string.lyrics))
+        Item(Icons.Filled.Link, stringResource(R.string.link_lyrics), stringResource(R.string.link_lyrics_hint)) { nav.push(com.arios.player.ui.Screen.LinkLyrics) }
         Switch(Icons.Filled.CloudDownload, stringResource(R.string.auto_lyrics), stringResource(R.string.auto_lyrics_hint), p.autoFetchLyrics) { p.autoFetchLyrics = it }
         Switch(Icons.Filled.Translate, stringResource(R.string.show_translation), null, p.showTranslation) { p.showTranslation = it }
         Switch(Icons.Filled.AutoFixHigh, stringResource(R.string.auto_sync_setting), stringResource(R.string.auto_sync_setting_hint), p.autoSyncLyrics) { p.autoSyncLyrics = it }

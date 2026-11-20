@@ -17,6 +17,7 @@ sealed interface Screen {
     data object Sound : Screen
     data object Stats : Screen
     data object Duplicates : Screen
+    data object LinkLyrics : Screen
     data class TagEditor(val songId: Long) : Screen
     data class ShareLyrics(val songId: Long, val line: Int = -1) : Screen
     data class Smart(val list: com.arios.player.data.SmartList) : Screen
@@ -38,6 +39,8 @@ class AppNav {
     var downloadsTab by mutableIntStateOf(0)
     var carMode by mutableStateOf(false)
     var wrapped by mutableStateOf(false)
+    /** A song link found in the clipboard, offered once. */
+    var clipLink by mutableStateOf<String?>(null)
 
     fun push(s: Screen) { stack += s; playerOpen = false; lyricsFull = false; carMode = false }
     fun back(): Boolean = when {

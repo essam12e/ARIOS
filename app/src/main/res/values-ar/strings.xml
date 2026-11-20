@@ -307,4 +307,23 @@
     <string name="reset_sync_hint">تنحذف كل التوقيتات وترجع الكلمات نص عادي كأنها ما تزامنت أبداً.</string>
     <string name="reset_sync_done">تمت إعادة الضبط</string>
     <string name="auto_sync_applied">تم اعتماد المزامنة التلقائية بدل اليدوية</string>
+    <string name="link_lyrics">كلمات من رابط</string>
+    <string name="link_lyrics_hint">انسخ رابط أغنية (يوتيوب، سبوتيفاي، أنغامي…) وفلوفاي يجيب كلماتها ويزامنها تلقائياً</string>
+    <string name="link_lyrics_info">نقرأ اسم الأغنية من الرابط فقط، بدون تنزيل أي صوت. أول ما تكون الأغنية في مكتبتك تنربط بكلماتها وتتزامن تلقائياً.</string>
+    <string name="link_paste_hint">الصق رابط الأغنية هنا</string>
+    <string name="paste">لصق</string>
+    <string name="fetch_lyrics">جلب الكلمات</string>
+    <string name="link_clip_found">لقينا رابط أغنية منسوخ</string>
+    <string name="link_clip_question">تبي فلوفاي يجيب كلماتها ويزامنها؟</string>
+    <string name="link_working">نجيب الكلمات من الرابط…</string>
+    <string name="link_found">حُفظت كلمات «%1$s» ✓</string>
+    <string name="link_not_found">ما لقينا كلمات لـ «%1$s»</string>
+    <string name="link_failed">تعذّر قراءة الرابط</string>
+    <string name="link_attached">مربوطة بـ %1$s</string>
+    <string name="link_waiting">بانتظار إضافة الأغنية لمكتبتك</string>
+    <string name="link_synced">متزامنة</string>
+    <string name="link_plain">بتتزامن تلقائياً</string>
+    <string name="link_none">ما فيه روابط للحين</string>
+    <string name="link_invalid">هذا مو رابط أغنية مدعوم</string>
+    <string name="no">لا</string>
 </resources>

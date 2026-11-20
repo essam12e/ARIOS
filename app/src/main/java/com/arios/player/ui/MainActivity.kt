@@ -84,6 +84,11 @@ class MainActivity : AppCompatActivity() {
         if (intent.getBooleanExtra(EXTRA_OPEN_PLAYER, false)) nav.playerOpen = true
         if (intent.getBooleanExtra(EXTRA_OPEN_LYRICS, false)) nav.lyricsFull = true
         if (intent.getBooleanExtra(EXTRA_OPEN_DOWNLOADS, false)) { nav.selectTab(Tab.DOWNLOADS); nav.downloadsTab = 1 }
+        if (intent.action == Intent.ACTION_SEND && intent.type?.startsWith("text/") == true) {
+            val link = com.arios.player.lyrics.LinkLyrics.findLink(intent.getStringExtra(Intent.EXTRA_TEXT))
+            if (link != null) Arios.linkLyrics.fetch(link) else nav.snack = getString(com.arios.player.R.string.link_invalid)
+            return
+        }
         if (intent.action == Intent.ACTION_VIEW && intent.data != null) {
             val uri = intent.data!!
             val name = uri.lastPathSegment?.substringAfterLast('/') ?: "audio"
@@ -97,6 +102,20 @@ class MainActivity : AppCompatActivity() {
 
     private fun playExternal(item: MediaItem) {
         Arios.player.playExternal(item)
+    }
+
+    /** Clipboard can only be read while the window has focus (Android 10+). */
+    override fun onWindowFocusChanged(hasFocus: Boolean) {
+        super.onWindowFocusChanged(hasFocus)
+        if (!hasFocus) return
+        runCatching {
+            val cm = getSystemService(android.content.ClipboardManager::class.java)
+            val desc = cm.primaryClipDescription ?: return
+            if (!desc.hasMimeType("text/*")) return
+            val text = cm.primaryClip?.getItemAt(0)?.text?.toString()
+            val link = com.arios.player.lyrics.LinkLyrics.findLink(text) ?: return
+            if (!Arios.linkLyrics.alreadyOffered(link) && nav.clipLink != link) nav.clipLink = link
+        }
     }
 
     override fun onDestroy() {

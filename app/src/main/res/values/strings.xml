@@ -309,4 +309,23 @@
     <string name="reset_sync_hint">All timings are removed and the lyrics go back to plain words, as if they were never synced.</string>
     <string name="reset_sync_done">Timing removed</string>
     <string name="auto_sync_applied">Auto sync applied – it replaced the manual timing</string>
+    <string name="link_lyrics">Lyrics from a link</string>
+    <string name="link_lyrics_hint">Copy a song link (YouTube, Spotify, Anghami…) and Flowfy gets and syncs its lyrics</string>
+    <string name="link_lyrics_info">Only the song name is read from the link; no audio is downloaded. When the song is in your library it gets its lyrics, synced automatically.</string>
+    <string name="link_paste_hint">Paste the song link here</string>
+    <string name="paste">Paste</string>
+    <string name="fetch_lyrics">Get lyrics</string>
+    <string name="link_clip_found">Song link copied</string>
+    <string name="link_clip_question">Get its lyrics and sync them?</string>
+    <string name="link_working">Getting lyrics from the link…</string>
+    <string name="link_found">Saved lyrics for “%1$s” ✓</string>
+    <string name="link_not_found">No lyrics found for “%1$s”</string>
+    <string name="link_failed">Couldn\'t read the link</string>
+    <string name="link_attached">Linked to %1$s</string>
+    <string name="link_waiting">Waiting for the song in your library</string>
+    <string name="link_synced">Synced</string>
+    <string name="link_plain">Will sync automatically</string>
+    <string name="link_none">No links yet</string>
+    <string name="link_invalid">Not a supported song link</string>
+    <string name="no">No</string>
 </resources>

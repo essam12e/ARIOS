@@ -7,6 +7,7 @@ import com.arios.player.data.MediaScanner
 import com.arios.player.data.Song
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
+import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -92,11 +93,22 @@ class LyricsRepository(private val context: Context) {
             if (!l.synced && Arios.prefs.autoSyncLyrics) requestSync(song, l, allowNetwork)
             return l
         }
+        // lyrics the user fetched from a song link
+        Arios.linkLyrics.findFor(song)?.let { e ->
+            saveRaw(song, e.lrc!!, if (e.synced) e.source.ifBlank { "Link" } else "Link")
+            val l = getLocal(song)
+            if (l != null && !l.synced && Arios.prefs.autoSyncLyrics) requestSync(song, l, allowNetwork)
+            if (l != null) return l
+        }
         if (!allowNetwork) return null
         val miss = missFor(song)
         if (miss.exists() && System.currentTimeMillis() - miss.lastModified() < 24L * 3600 * 1000) return null
         val best = withTimeoutOrNull(30_000) { autoFind(song) }
-        if (best != null) { save(song, best, manual = false); return best }
+        if (best != null) {
+            save(song, best, manual = false)
+            if (!best.synced && Arios.prefs.autoSyncLyrics) requestSync(song, best, allowNetwork = true)
+            return best
+        }
         withContext(Dispatchers.IO) { runCatching { miss.writeText("") } }
         return null
     }
@@ -107,6 +119,19 @@ class LyricsRepository(private val context: Context) {
     /** Songs whose plain lyrics are being timed right now. */
     val syncing: StateFlow<Set<String>> = _syncing
     private val syncTried = HashSet<String>()
+    private val deviceSync = kotlinx.coroutines.sync.Mutex()
+
+    /** Times every song that has words but no timing yet, in the background, without the user asking. */
+    suspend fun syncLibrary(songs: List<Song>) {
+        for (s in songs) {
+            if (!fileFor(s).exists() || syncFailFile(s).exists()) continue
+            if (synchronized(syncTried) { s.key in syncTried }) continue
+            val l = runCatching { readCache(s)?.second }.getOrNull() ?: continue
+            if (l.synced || l.lines.count { it.text.isNotBlank() } < 2) continue
+            synchronized(syncTried) { syncTried += s.key }
+            autoSync(s, l, allowNetwork = Arios.prefs.autoFetchLyrics)
+        }
+    }
 
     private fun syncFailFile(song: Song) = File(dir, hash(song.key) + ".nosync")
 
@@ -138,10 +163,11 @@ class LyricsRepository(private val context: Context) {
                 if (online != null) { save(song, online, manual = false); Arios.userStore.setOffset(song.key, 0); syncFailFile(song).delete(); return true }
             }
             val lines = plain.lines.map { it.text.trim() }.filter { it.isNotEmpty() && !it.matches(SECTION) }
-            val lrc = withContext(Dispatchers.Default) {
+            // one on-device analysis at a time (decoding a whole song is heavy)
+            val lrc = deviceSync.withLock { withContext(Dispatchers.Default) {
                 val pcm = AutoSync.decode(context, song.uri) ?: return@withContext null
                 AutoSync.syncPcm(pcm, lines)
-            }
+            } }
             if (lrc != null) { saveRaw(song, lrc, AUTO_SYNC); Arios.userStore.setOffset(song.key, 0); syncFailFile(song).delete(); return true }
             withContext(Dispatchers.IO) { runCatching { syncFailFile(song).writeText("") } }
             return false

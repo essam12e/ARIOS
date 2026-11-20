@@ -136,6 +136,7 @@ private fun LibraryHeader(nav: AppNav, lib: LibraryState, tab: Int, @Suppress("U
             Text(stringResource(R.string.library), style = MaterialTheme.typography.headlineMedium.copy(brush = AriosColors.brand))
             Text(stringResource(R.string.songs_count, lib.songs.size), style = MaterialTheme.typography.labelMedium, color = AriosColors.SilverDim)
         }
+        FilledTonalIconButton(onClick = { nav.push(Screen.LinkLyrics) }) { Icon(Icons.Filled.Link, stringResource(R.string.link_lyrics)) }
         FilledTonalIconButton(onClick = { nav.push(Screen.Stats) }) { Icon(Icons.Filled.Insights, stringResource(R.string.stats)) }
         if (tab == 2 || tab == 3) Box {
             FilledTonalIconButton(onClick = { sortOpen = true }) { Icon(Icons.AutoMirrored.Filled.Sort, stringResource(R.string.sort)) }

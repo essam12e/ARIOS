@@ -50,6 +50,20 @@ fun AppRoot(nav: AppNav, hasPermission: Boolean, requestPermission: () -> Unit) 
     }
     BackHandler(enabled = nav.stack.isNotEmpty() || nav.tab != Tab.LIBRARY) { nav.back() }
 
+    // lyrics-from-link progress → snackbar
+    val linkProgress by Arios.linkLyrics.progress.collectAsState()
+    val ctx = androidx.compose.ui.platform.LocalContext.current
+    LaunchedEffect(linkProgress) {
+        val p = linkProgress ?: return@LaunchedEffect
+        nav.snack = when (p.status) {
+            com.arios.player.lyrics.LinkLyrics.Status.WORKING -> ctx.getString(R.string.link_working)
+            com.arios.player.lyrics.LinkLyrics.Status.FOUND -> ctx.getString(R.string.link_found, p.title ?: "")
+            com.arios.player.lyrics.LinkLyrics.Status.NOT_FOUND -> ctx.getString(R.string.link_not_found, p.title ?: "")
+            com.arios.player.lyrics.LinkLyrics.Status.FAILED -> ctx.getString(R.string.link_failed)
+        }
+        if (p.status != com.arios.player.lyrics.LinkLyrics.Status.WORKING) Arios.linkLyrics.clearProgress()
+    }
+
     // live theme: accent / AMOLED / colours taken from the current cover
     val prefsV by Arios.prefs.version.collectAsState()
     val lib by Arios.library.state.collectAsState()
@@ -101,6 +115,7 @@ fun AppRoot(nav: AppNav, hasPermission: Boolean, requestPermission: () -> Unit) 
                         is Screen.Sound -> com.arios.player.ui.audio.SoundScreen(nav, bottomPadding)
                         is Screen.Stats -> com.arios.player.ui.stats.StatsScreen(nav, bottomPadding)
                         is Screen.Duplicates -> com.arios.player.ui.library.DuplicatesScreen(nav, bottomPadding)
+                        is Screen.LinkLyrics -> com.arios.player.ui.links.LinkLyricsScreen(nav, bottomPadding)
                         is Screen.TagEditor -> com.arios.player.ui.library.TagEditorScreen(nav, target2.songId, bottomPadding)
                         is Screen.ShareLyrics -> com.arios.player.ui.share.ShareLyricsScreen(nav, target2.songId, target2.line, bottomPadding)
                         is Screen -> DetailScreen(nav, target2, bottomPadding)
@@ -128,6 +143,15 @@ fun AppRoot(nav: AppNav, hasPermission: Boolean, requestPermission: () -> Unit) 
         }
 
         SnackbarHost(snackHost, Modifier.align(Alignment.BottomCenter).padding(bottom = bottomPadding + 8.dp))
+
+        AnimatedVisibility(
+            nav.clipLink != null && !nav.playerOpen && !nav.lyricsFull,
+            modifier = Modifier.align(Alignment.TopCenter).statusBarsPadding().padding(top = 8.dp),
+            enter = slideInVertically(Motion.offsetSoft) { -it } + Motion.fadeInSoft(),
+            exit = slideOutVertically { -it } + Motion.fadeOutSoft(),
+        ) {
+            nav.clipLink?.let { link -> com.arios.player.ui.links.ClipboardLinkBanner(link) { nav.clipLink = null } }
+        }
 
         AnimatedVisibility(nav.playerOpen, enter = Motion.playerEnter, exit = Motion.playerExit) { NowPlayingScreen(nav) }
         AnimatedVisibility(nav.lyricsFull, enter = Motion.lyricsEnter, exit = Motion.lyricsExit) { FullLyricsScreen(nav) }

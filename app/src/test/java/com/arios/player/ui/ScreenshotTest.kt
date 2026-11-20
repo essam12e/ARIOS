@@ -108,6 +108,17 @@ class ScreenshotTest {
         org.junit.Assert.assertTrue(res is coil.fetch.SourceResult)
     }
 
+    @Test fun linkLyrics() {
+        playing(songs[4], 17_200)
+        val now = System.currentTimeMillis()
+        Arios.linkLyrics.setForTest(listOf(
+            com.arios.player.lyrics.LinkLyrics.Entry("1", "https://youtu.be/a", songs[4].title, songs[4].artist, 200, "[00:01.00]x", "LRCLIB", true, now, songs[4].key, songs[4].title),
+            com.arios.player.lyrics.LinkLyrics.Entry("2", "https://youtu.be/b", "Ya Layali", "Nour", 210, "x\ny", "Link", false, now, null, null),
+            com.arios.player.lyrics.LinkLyrics.Entry("3", "https://open.spotify.com/track/c", "Midnight Drive", "Sami", null, null, "", false, now, null, null),
+        ))
+        shoot("8_link_lyrics", AppNav().apply { push(com.arios.player.ui.Screen.LinkLyrics); clipLink = "https://youtu.be/new" })
+    }
+
     @Test fun library() {
         playing(songs[4], 17_200)
         Arios.prefs.libraryTab = 3

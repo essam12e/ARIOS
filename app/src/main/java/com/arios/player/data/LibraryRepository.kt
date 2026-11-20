@@ -29,6 +29,11 @@ class LibraryRepository(private val context: Context) {
         }
         raw = songs
         _state.value = build(songs)
+        // lyrics saved from links find their songs; plain lyrics get timed in the background
+        Arios.scope.launch {
+            runCatching { Arios.linkLyrics.attachAll(songs) }
+            if (Arios.prefs.autoSyncLyrics) runCatching { Arios.lyrics.syncLibrary(_state.value.songs) }
+        }
     }
 
     /** Every scanned song, including those in excluded folders. */

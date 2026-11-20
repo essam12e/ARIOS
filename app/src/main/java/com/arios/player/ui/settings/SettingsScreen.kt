@@ -108,6 +108,7 @@ fun SettingsScreen(nav: AppNav, bottomPadding: androidx.compose.ui.unit.Dp) {
         Section(stringResource(R.string.lyrics))
         Switch(Icons.Filled.CloudDownload, stringResource(R.string.auto_lyrics), stringResource(R.string.auto_lyrics_hint), p.autoFetchLyrics) { p.autoFetchLyrics = it }
         Switch(Icons.Filled.Translate, stringResource(R.string.show_translation), null, p.showTranslation) { p.showTranslation = it }
+        Switch(Icons.Filled.AutoFixHigh, stringResource(R.string.auto_sync_setting), stringResource(R.string.auto_sync_setting_hint), p.autoSyncLyrics) { p.autoSyncLyrics = it }
         Switch(Icons.Filled.Gesture, stringResource(R.string.word_by_word), stringResource(R.string.word_by_word_hint), p.wordByWord) { p.wordByWord = it }
         Switch(Icons.Filled.FormatAlignCenter, stringResource(R.string.align_center), null, p.lyricsCenter) { p.lyricsCenter = it }
         SliderItem(Icons.Filled.FormatSize, stringResource(R.string.lyrics_size), "${p.lyricsFontSize}", p.lyricsFontSize.toFloat(), 16f..44f) {

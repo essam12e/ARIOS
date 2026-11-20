@@ -50,6 +50,7 @@ fun LyricsEditorScreen(nav: AppNav, songId: Long, bottomPadding: androidx.compos
     var raw by remember { mutableStateOf("") }
     val lines = remember { mutableStateListOf<EditLine>() }
     var cursor by remember { mutableIntStateOf(0) }
+    var autoBusy by remember { mutableStateOf(false) }
     val player by Arios.player.state.collectAsState()
 
     LaunchedEffect(songId) {
@@ -104,7 +105,23 @@ fun LyricsEditorScreen(nav: AppNav, songId: Long, bottomPadding: androidx.compos
             Spacer(Modifier.height(bottomPadding))
         } else SyncPane(song.id == player.songId, lines, cursor, { cursor = it }, bottomPadding, onPlayThis = {
             Arios.player.playSongs(listOf(song))
-        })
+        }, onAuto = {
+            scope.launch {
+                autoBusy = true
+                val texts = lines.filter { it.text.isNotBlank() }
+                val lrc = kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.Default) {
+                    com.arios.player.lyrics.AutoSync.decode(context, song.uri)?.let { pcm ->
+                        com.arios.player.lyrics.AutoSync.syncPcm(pcm, texts.map { it.text.trim() })
+                    }
+                }
+                val parsed = lrc?.let { LrcParser.parse(it, "auto", song.durationMs) }
+                if (parsed != null && parsed.lines.size == texts.size) {
+                    texts.forEachIndexed { i, l -> l.time = parsed.lines[i].start }
+                    nav.snack = context.getString(R.string.auto_sync_done)
+                } else nav.snack = context.getString(R.string.auto_sync_failed)
+                autoBusy = false
+            }
+        }, autoBusy = autoBusy)
     }
 }
 
@@ -116,6 +133,8 @@ private fun ColumnScope.SyncPane(
     setCursor: (Int) -> Unit,
     bottomPadding: androidx.compose.ui.unit.Dp,
     onPlayThis: () -> Unit,
+    onAuto: () -> Unit,
+    autoBusy: Boolean,
 ) {
     val state by Arios.player.state.collectAsState()
     var pos by remember { mutableLongStateOf(0L) }
@@ -129,6 +148,15 @@ private fun ColumnScope.SyncPane(
             Text(stringResource(R.string.sync_play_first), Modifier.weight(1f), style = MaterialTheme.typography.bodyMedium)
             Button(onClick = onPlayThis) { Text(stringResource(R.string.play)) }
         }
+    }
+    Row(Modifier.fillMaxWidth().padding(horizontal = 12.dp), verticalAlignment = Alignment.CenterVertically) {
+        Button(onClick = onAuto, enabled = !autoBusy, colors = ButtonDefaults.buttonColors(AriosColors.Mint, AriosColors.Black)) {
+            if (autoBusy) CircularProgressIndicator(Modifier.size(18.dp), strokeWidth = 2.dp, color = AriosColors.Black)
+            else Icon(Icons.Filled.AutoFixHigh, null, Modifier.size(18.dp))
+            Spacer(Modifier.width(8.dp)); Text(stringResource(R.string.auto_sync_now))
+        }
+        Spacer(Modifier.width(10.dp))
+        Text(stringResource(R.string.auto_sync_then_fix), style = MaterialTheme.typography.bodySmall, color = AriosColors.SilverDim, modifier = Modifier.weight(1f))
     }
     Text(stringResource(R.string.sync_hint), Modifier.padding(horizontal = 16.dp, vertical = 6.dp), style = MaterialTheme.typography.bodySmall, color = AriosColors.SilverDim)
     LazyColumn(state = listState, modifier = Modifier.weight(1f).fillMaxWidth()) {

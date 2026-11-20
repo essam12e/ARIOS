@@ -291,4 +291,14 @@
     <string name="wrapped_peak">ساعتك المفضلة: %1$d:00</string>
     <string name="wrapped_streak">أطول سلسلة: %1$d يوم متتالي</string>
     <string name="wrapped_share_title">شارك سنتك</string>
+    <string name="auto_synced">مزامنة تلقائية</string>
+    <string name="auto_syncing">جارٍ مزامنة الكلمات مع الصوت…</string>
+    <string name="not_synced_short">هذه الكلمات بدون توقيت حتى الآن.</string>
+    <string name="auto_sync_now">مزامنة تلقائية</string>
+    <string name="sync_manually">مزامنة يدوية</string>
+    <string name="auto_sync_done">تمت المزامنة تلقائياً – اضبط أي سطر بـ − / +</string>
+    <string name="auto_sync_failed">تعذّرت المزامنة التلقائية لهذه الأغنية</string>
+    <string name="auto_sync_then_fix">يوقّت كل سطر من الصوت، وبعدها تقدر تضبطه</string>
+    <string name="auto_sync_setting">مزامنة الكلمات غير المتزامنة تلقائياً</string>
+    <string name="auto_sync_setting_hint">يبحث عن نسخة متزامنة أو يوقّت الأسطر من صوت المغني على جوالك</string>
 </resources>

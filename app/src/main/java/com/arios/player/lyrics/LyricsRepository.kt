@@ -11,6 +11,7 @@ import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import kotlinx.coroutines.withTimeoutOrNull
 import java.io.File
@@ -86,13 +87,81 @@ class LyricsRepository(private val context: Context) {
     }
 
     suspend fun get(song: Song, allowNetwork: Boolean = Arios.prefs.autoFetchLyrics): Lyrics? {
-        getLocal(song)?.let { return it }
+        getLocal(song)?.let { l ->
+            // words without timing → time them in the background (online match first, then on-device)
+            if (!l.synced && Arios.prefs.autoSyncLyrics) requestSync(song, l, allowNetwork)
+            return l
+        }
         if (!allowNetwork) return null
         val miss = missFor(song)
         if (miss.exists() && System.currentTimeMillis() - miss.lastModified() < 24L * 3600 * 1000) return null
         val best = withTimeoutOrNull(30_000) { autoFind(song) }
         if (best != null) { save(song, best, manual = false); return best }
         withContext(Dispatchers.IO) { runCatching { miss.writeText("") } }
+        return null
+    }
+
+    // ------------------------------------------------------------------ automatic timing
+
+    private val _syncing = MutableStateFlow<Set<String>>(emptySet())
+    /** Songs whose plain lyrics are being timed right now. */
+    val syncing: StateFlow<Set<String>> = _syncing
+    private val syncTried = HashSet<String>()
+
+    private fun syncFailFile(song: Song) = File(dir, hash(song.key) + ".nosync")
+
+    /** Starts automatic timing once per song (skipped if it already failed for this song). */
+    fun requestSync(song: Song, plain: Lyrics, allowNetwork: Boolean, force: Boolean = false) {
+        synchronized(syncTried) {
+            if (!force && (song.key in syncTried || syncFailFile(song).exists())) return
+            syncTried += song.key
+        }
+        Arios.scope.launch { autoSync(song, plain, allowNetwork) }
+    }
+
+    /**
+     * Gives plain lyrics real timings:
+     * 1. a synced version online whose words match the ones we have (title can be wrong),
+     * 2. otherwise on-device alignment of each line to the vocal phrases of the audio.
+     */
+    suspend fun autoSync(song: Song, plain: Lyrics, allowNetwork: Boolean = true): Boolean {
+        _syncing.value = _syncing.value + song.key
+        try {
+            if (allowNetwork) {
+                val online = withTimeoutOrNull(25_000) { findSyncedMatching(song, plain) }
+                if (online != null) { save(song, online, manual = false); syncFailFile(song).delete(); return true }
+            }
+            val lines = plain.lines.map { it.text.trim() }.filter { it.isNotEmpty() && !it.matches(SECTION) }
+            val lrc = withContext(Dispatchers.Default) {
+                val pcm = AutoSync.decode(context, song.uri) ?: return@withContext null
+                AutoSync.syncPcm(pcm, lines)
+            }
+            if (lrc != null) { saveRaw(song, lrc, AUTO_SYNC); syncFailFile(song).delete(); return true }
+            withContext(Dispatchers.IO) { runCatching { syncFailFile(song).writeText("") } }
+            return false
+        } finally {
+            _syncing.value = _syncing.value - song.key
+        }
+    }
+
+    /** Online synced lyrics accepted only when their lines match the plain lyrics we already have. */
+    private suspend fun findSyncedMatching(song: Song, plain: Lyrics): Lyrics? {
+        val queries = queriesFor(song)
+        val mine = plain.lines.map { LyricsMatcher.normalise(it.text) }.filter { it.length > 3 }
+        if (mine.isEmpty()) return null
+        for (p in ALL_PROVIDERS.filter { Arios.prefs.sourceEnabled(it.id) }) {
+            val cands = searchProvider(p, queries)
+                .map { ScoredCandidate(it, LyricsMatcher.score(it, queries)) }
+                .filter { it.score.durationDiff == null || it.score.durationDiff <= 15 }
+                .sortedByDescending { it.score.total }.take(4)
+            for (c in cands) {
+                val l = runCatching { c.candidate.load() }.getOrNull() ?: continue
+                if (!l.synced) continue
+                val theirs = l.lines.map { LyricsMatcher.normalise(it.text) }
+                val hit = mine.count { m -> theirs.any { t -> LyricsMatcher.similarity(m, t) >= 0.8 } }
+                if (hit >= mine.size * 0.5) return l
+            }
+        }
         return null
     }
 
@@ -167,6 +236,8 @@ class LyricsRepository(private val context: Context) {
 
     companion object {
         const val EMBEDDED = "Embedded"
+        const val AUTO_SYNC = "AutoSync"
+        private val SECTION = Regex("""^\s*[\[(][^\])]{0,40}[\])]\s*$""")
         fun cleanTitle(t: String): String = LyricsMatcher.clean(t).ifEmpty { t }
     }
 }

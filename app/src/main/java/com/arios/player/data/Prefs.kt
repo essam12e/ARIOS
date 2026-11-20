@@ -26,6 +26,9 @@ class Prefs(context: Context) {
     var autoFetchArtwork: Boolean
         get() = sp.getBoolean("auto_art", true)
         set(v) { sp.edit().putBoolean("auto_art", v).apply(); bump() }
+    var autoSyncLyrics: Boolean
+        get() = sp.getBoolean("auto_sync", true)
+        set(v) { sp.edit().putBoolean("auto_sync", v).apply(); bump() }
     var lyricsCenter: Boolean
         get() = sp.getBoolean("lyrics_center", false)
         set(v) { sp.edit().putBoolean("lyrics_center", v).apply(); bump() }

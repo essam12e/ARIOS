@@ -293,4 +293,14 @@
     <string name="wrapped_peak">Your favourite hour: %1$d:00</string>
     <string name="wrapped_streak">Longest streak: %1$d days in a row</string>
     <string name="wrapped_share_title">Share your year</string>
+    <string name="auto_synced">Auto-synced</string>
+    <string name="auto_syncing">Timing the lyrics to the song…</string>
+    <string name="not_synced_short">These lyrics have no timing yet.</string>
+    <string name="auto_sync_now">Auto sync</string>
+    <string name="sync_manually">Sync by hand</string>
+    <string name="auto_sync_done">Timed automatically – fine-tune any line with − / +</string>
+    <string name="auto_sync_failed">Couldn\'t time this song automatically</string>
+    <string name="auto_sync_then_fix">Times every line from the audio, then you can fine-tune</string>
+    <string name="auto_sync_setting">Sync plain lyrics automatically</string>
+    <string name="auto_sync_setting_hint">Finds a synced version or times the lines from the song\'s vocals, on your phone</string>
 </resources>

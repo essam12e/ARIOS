@@ -66,7 +66,7 @@ object Arios {
     }
 }
 
-object BuildConfigInfo { const val VERSION = "1.4.0" }
+object BuildConfigInfo { const val VERSION = "1.5.0" }
 
 class AriosApp : Application(), ImageLoaderFactory {
     override fun onCreate() {

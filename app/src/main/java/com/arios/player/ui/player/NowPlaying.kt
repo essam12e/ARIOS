@@ -255,7 +255,8 @@ fun LyricsCard(nav: AppNav, song: Song?, palette: ArtPalette, modifier: Modifier
             verticalAlignment = Alignment.CenterVertically) {
             Text(stringResource(R.string.lyrics), style = MaterialTheme.typography.titleMedium, color = Color.White, modifier = Modifier.weight(1f))
             (ls as? LyricsState.Ready)?.let {
-                Text(it.lyrics.source, style = MaterialTheme.typography.labelSmall, color = Color.White.copy(alpha = 0.6f))
+                Text(if (it.lyrics.source == com.arios.player.lyrics.LyricsRepository.AUTO_SYNC) stringResource(R.string.auto_synced) else it.lyrics.source,
+                    style = MaterialTheme.typography.labelSmall, color = Color.White.copy(alpha = 0.6f))
             }
             IconButton(onClick = { nav.lyricsFull = true }) { Icon(Icons.Filled.OpenInFull, stringResource(R.string.expand), tint = Color.White) }
         }
@@ -282,8 +283,7 @@ fun LyricsBody(nav: AppNav, song: Song?, ls: LyricsState, offset: Long, fontSize
             contentPadding = PaddingValues(vertical = 8.dp),
         ) { Arios.player.seekTo(it) }
         else PlainLyricsView(ls.lyrics, fontSize, Color.White, Modifier.fillMaxSize(), prefs.lyricsCenter) {
-            Text(stringResource(R.string.not_synced_hint), style = MaterialTheme.typography.labelMedium, color = Color.White.copy(alpha = 0.6f),
-                modifier = Modifier.padding(bottom = 12.dp))
+            AutoSyncBanner(nav, song, ls.lyrics)
         }
         LyricsState.Loading, LyricsState.Idle -> Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
             Column(horizontalAlignment = Alignment.CenterHorizontally) {
@@ -321,6 +321,33 @@ private fun LongAudioRow() {
         Row(Modifier.fillMaxWidth().padding(top = 6.dp), horizontalArrangement = Arrangement.SpaceEvenly) {
             ActionChip(Icons.Filled.Replay30, stringResource(R.string.back_30)) { Arios.player.seekBy(-30_000) }
             ActionChip(Icons.Filled.Forward30, stringResource(R.string.forward_30)) { Arios.player.seekBy(30_000) }
+        }
+    }
+}
+
+/** Shown above unsynced lyrics: automatic timing in progress, or one tap to start it. */
+@Composable
+private fun AutoSyncBanner(nav: AppNav, song: Song?, lyrics: com.arios.player.lyrics.Lyrics) {
+    val syncing by Arios.lyrics.syncing.collectAsState()
+    val busy = song != null && song.key in syncing
+    Column(Modifier.fillMaxWidth().padding(bottom = 14.dp).clip(RoundedCornerShape(18.dp)).background(Color.Black.copy(alpha = 0.22f)).padding(14.dp)) {
+        if (busy) {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                CircularProgressIndicator(Modifier.size(20.dp), color = AriosColors.Mint, strokeWidth = 2.dp)
+                Spacer(Modifier.width(10.dp))
+                Text(stringResource(R.string.auto_syncing), color = Color.White, style = MaterialTheme.typography.bodyMedium)
+            }
+            Spacer(Modifier.height(8.dp))
+            LinearProgressIndicator(Modifier.fillMaxWidth(), color = AriosColors.Mint, trackColor = Color.White.copy(alpha = 0.15f))
+        } else {
+            Text(stringResource(R.string.not_synced_short), color = Color.White.copy(alpha = 0.75f), style = MaterialTheme.typography.bodySmall)
+            Spacer(Modifier.height(8.dp))
+            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                FilledTonalButton(onClick = { song?.let { Arios.lyrics.requestSync(it, lyrics, Arios.prefs.autoFetchLyrics, force = true) } }) {
+                    Icon(Icons.Filled.AutoFixHigh, null, Modifier.size(18.dp)); Spacer(Modifier.width(6.dp)); Text(stringResource(R.string.auto_sync_now))
+                }
+                TextButton(onClick = { song?.let { nav.push(Screen.LyricsEditor(it.id)) } }) { Text(stringResource(R.string.sync_manually), color = Color.White) }
+            }
         }
     }
 }

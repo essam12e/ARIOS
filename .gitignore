@@ -15,3 +15,8 @@ keystore.properties
 /release/
 .kotlin/
 /app/src/test/resources-local/
+ios/build/
+ios/*.xcodeproj/
+ios/Payload/
+ios/*.ipa
+ios/build.log

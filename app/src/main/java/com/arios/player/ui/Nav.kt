@@ -23,7 +23,7 @@ sealed interface Screen {
     data class Smart(val list: com.arios.player.data.SmartList) : Screen
 }
 
-enum class Tab { LIBRARY, SEARCH, DOWNLOADS, SETTINGS }
+enum class Tab { LIBRARY, SEARCH, REMIX, DOWNLOADS, SETTINGS }
 
 /** All navigation + overlay state of the single activity. */
 class AppNav {

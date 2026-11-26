@@ -121,6 +121,7 @@ fun AppRoot(nav: AppNav, hasPermission: Boolean, requestPermission: () -> Unit) 
                         is Screen -> DetailScreen(nav, target2, bottomPadding)
                         Tab.LIBRARY -> LibraryScreen(nav, hasPermission, requestPermission, bottomPadding)
                         Tab.SEARCH -> SearchScreen(nav, bottomPadding)
+                        Tab.REMIX -> com.arios.player.ui.remix.RemixScreen(nav, bottomPadding)
                         Tab.DOWNLOADS -> DownloadsScreen(nav, bottomPadding)
                         Tab.SETTINGS -> SettingsScreen(nav, bottomPadding)
                     }
@@ -175,6 +176,7 @@ private fun BottomBar(nav: AppNav) {
     ) {
         NavItem(Icons.Filled.LibraryMusic, stringResource(R.string.library), nav.tab == Tab.LIBRARY && nav.stack.isEmpty()) { nav.selectTab(Tab.LIBRARY) }
         NavItem(Icons.Filled.Search, stringResource(R.string.search), nav.tab == Tab.SEARCH && nav.stack.isEmpty()) { nav.selectTab(Tab.SEARCH) }
+        NavItem(Icons.Filled.GraphicEq, stringResource(R.string.remix), nav.tab == Tab.REMIX && nav.stack.isEmpty()) { nav.selectTab(Tab.REMIX) }
         NavItem(Icons.Filled.Download, stringResource(R.string.downloads), nav.tab == Tab.DOWNLOADS && nav.stack.isEmpty(), badge = active) { nav.selectTab(Tab.DOWNLOADS) }
         NavItem(Icons.Filled.Settings, stringResource(R.string.settings), nav.tab == Tab.SETTINGS && nav.stack.isEmpty()) { nav.selectTab(Tab.SETTINGS) }
     }

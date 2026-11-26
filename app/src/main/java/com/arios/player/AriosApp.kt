@@ -43,6 +43,7 @@ object Arios {
     lateinit var userStore: UserStore; private set
     lateinit var lyrics: LyricsRepository; private set
     lateinit var linkLyrics: com.arios.player.lyrics.LinkLyrics; private set
+    lateinit var remix: com.arios.player.remix.RemixSession; private set
     lateinit var artwork: ArtworkRepository; private set
     lateinit var downloader: Downloader; private set
     lateinit var player: PlayerController; private set
@@ -59,6 +60,7 @@ object Arios {
         library = LibraryRepository(a)
         lyrics = LyricsRepository(a)
         linkLyrics = com.arios.player.lyrics.LinkLyrics(a)
+        remix = com.arios.player.remix.RemixSession(a)
         artwork = ArtworkRepository(a)
         downloader = Downloader(a)
         player = PlayerController(a)
@@ -68,7 +70,7 @@ object Arios {
     }
 }
 
-object BuildConfigInfo { const val VERSION = "1.6.0" }
+object BuildConfigInfo { const val VERSION = "1.7.0" }
 
 class AriosApp : Application(), ImageLoaderFactory {
     override fun onCreate() {

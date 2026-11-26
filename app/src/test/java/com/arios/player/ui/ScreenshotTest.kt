@@ -14,6 +14,8 @@ import com.arios.player.playback.PlayerUiState
 import com.arios.player.playback.QueueEntry
 import com.arios.player.ui.theme.AriosTheme
 import com.github.takahirom.roborazzi.captureRoboImage
+import androidx.compose.ui.test.performTouchInput
+import androidx.compose.ui.test.swipeUp
 import kotlinx.coroutines.runBlocking
 import org.junit.Before
 import org.junit.Rule
@@ -117,6 +119,30 @@ class ScreenshotTest {
             com.arios.player.lyrics.LinkLyrics.Entry("3", "https://open.spotify.com/track/c", "Midnight Drive", "Sami", null, null, "", false, now, null, null),
         ))
         shoot("8_link_lyrics", AppNav().apply { push(com.arios.player.ui.Screen.LinkLyrics); clipLink = "https://youtu.be/new" })
+    }
+
+    private fun fakeAnalysis(bpm: Double, dur: Double, key: Int, minor: Boolean, seed: Int): com.arios.player.remix.TrackAnalysis {
+        val r = java.util.Random(seed.toLong())
+        val beats = ((dur - 0.3) / (60 / bpm)).toInt()
+        val energy = FloatArray(beats) { b -> val x = b.toFloat() / beats; (if (x < 0.08 || x > 0.92) 0.35f else 0.85f) + r.nextFloat() * 0.1f }
+        val vocal = FloatArray(beats) { b -> val x = b.toFloat() / beats; if (x in 0.12..0.82) 0.7f else 0.05f }
+        val peaks = FloatArray(com.arios.player.remix.TrackAnalysis.PEAKS) { i -> val x = i.toFloat() / com.arios.player.remix.TrackAnalysis.PEAKS
+            ((if (x < 0.08 || x > 0.92) 0.4f else 0.85f) * (0.55f + 0.45f * r.nextFloat())) }
+        return com.arios.player.remix.TrackAnalysis(dur, bpm, 0.3, 0, key, minor, energy, vocal, peaks, 0.2f)
+    }
+
+    @Test fun remix() {
+        val r = Arios.remix
+        val ta = fakeAnalysis(124.0, 214.0, 9, true, 1); val tb = fakeAnalysis(127.5, 198.0, 4, true, 2)
+        r.a.value = com.arios.player.remix.Deck(com.arios.player.remix.DeckSource.of(songs[4]), ta, com.arios.player.remix.DeckStatus.READY, 1f)
+        r.b.value = com.arios.player.remix.Deck(com.arios.player.remix.DeckSource.of(songs[1]), tb, com.arios.player.remix.DeckStatus.READY, 1f)
+        r.setPlanForTest(com.arios.player.remix.AutoPlanner.plan(ta, tb))
+        shoot("9_remix", AppNav().apply { selectTab(Tab.REMIX) })
+        for (k in 1..2) {
+            rule.onRoot().performTouchInput { swipeUp(startY = bottom * 0.8f, endY = bottom * 0.15f, durationMillis = 400) }
+            repeat(6) { rule.mainClock.advanceTimeBy(400); Thread.sleep(200); org.robolectric.Shadows.shadowOf(android.os.Looper.getMainLooper()).idle() }
+            rule.onRoot().captureRoboImage("build/screens/9_remix_$k.png")
+        }
     }
 
     @Test fun library() {

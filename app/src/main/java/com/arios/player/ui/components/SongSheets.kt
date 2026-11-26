@@ -15,6 +15,7 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.GraphicEq
 import androidx.compose.material.icons.automirrored.filled.PlaylistAdd
 import androidx.compose.material.icons.automirrored.filled.QueueMusic
 import androidx.compose.material.icons.filled.Album
@@ -94,6 +95,15 @@ fun SongMenuSheet(nav: AppNav) {
             SheetItem(Icons.Filled.SkipNext, stringResource(R.string.play_next)) { close { Arios.player.playNext(listOf(song)); nav.snack = context.getString(R.string.added_next) } }
             SheetItem(Icons.AutoMirrored.Filled.QueueMusic, stringResource(R.string.add_to_queue)) { close { Arios.player.enqueue(listOf(song)); nav.snack = context.getString(R.string.added_queue) } }
             SheetItem(Icons.AutoMirrored.Filled.PlaylistAdd, stringResource(R.string.add_to_playlist)) { close { nav.addToPlaylist = listOf(song) } }
+            SheetItem(androidx.compose.material.icons.Icons.Filled.GraphicEq, stringResource(R.string.add_to_remix)) {
+                close {
+                    val r = Arios.remix
+                    r.setDeck(if (r.a.value.source == null) 'A' else if (r.b.value.source == null) 'B' else 'B',
+                        com.arios.player.remix.DeckSource.of(song))
+                    nav.snack = context.getString(R.string.added_to_remix)
+                    nav.selectTab(com.arios.player.ui.Tab.REMIX)
+                }
+            }
             SheetItem(if (fav) Icons.Filled.Favorite else Icons.Filled.FavoriteBorder,
                 stringResource(if (fav) R.string.remove_favorite else R.string.add_favorite)) { close { Arios.userStore.toggleFavorite(song.key) } }
             SheetItem(Icons.Filled.Album, stringResource(R.string.go_album)) { close { nav.push(Screen.AlbumDetail(song.albumId)) } }
